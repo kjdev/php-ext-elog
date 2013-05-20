@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+
 if [ ! -t 0 ]; then
     BUFFER=`cat -`
 fi

@@ -2,7 +2,10 @@
 throw exception hook: system INI
 --INI--
 date.timezone=Asia/Tokyo
-log_errors=On
+log_errors=Off
+display_staratup_errors=Off
+display_errors=Off
+track_errors=Off
 elog.throw_exception_hook=On
 --SKIPIF--
 --FILE--
@@ -16,7 +19,6 @@ if (!extension_loaded('elog')) {
 $log_1 = dirname(__FILE__) . "/tmp_065_0.log";
 $log_2 = dirname(__FILE__) . "/tmp_065_1.log";
 
-ini_set('display_errors', 'Off');
 ini_set('error_log', $log_1);
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log_2);

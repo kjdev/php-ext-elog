@@ -99,7 +99,7 @@ TimeFormat: OK
 [ elog.filter_timestamp_format: \i\t \i\s \t\h\e jS \d\a\y. ]
 === output ===
 dummy
-elog_time: it is the %dth day.
+elog_time: it is the %s day.
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: D M j G:i T Y ]
