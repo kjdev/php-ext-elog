@@ -8,6 +8,13 @@ elog is a function which is an extension of the error\_log.
 need at least PHP 5.4 or newer.
 
 
+# Dependencies
+
+json processing is not using the jansson library.
+
+* [jansson](http://www.digip.org/jansson/)
+
+
 # Build
 
     % phpize
