@@ -11,3 +11,6 @@ before_script:
 
 script:
   - make test | tee test-output.txt && grep 'TEST SUMMARY$' test-output.txt > /dev/null ; test $? '!=' 0
+
+after_script:
+  - find ./tests -name '*.diff' | xargs -i ksh -c 'echo {}; cat {}; echo'
