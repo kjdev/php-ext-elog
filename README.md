@@ -44,6 +44,7 @@ elog.ini:
  elog.filter\_execute                | NULL            | PHP\_INI\_ALL
  elog.filter\_array\_assoc           | "Off"           | PHP\_INI\_ALL
  elog.filter\_json\_unicode\_escape  | "On"            | PHP\_INI\_ALL
+ elog.filter\_json\_assoc            | "Off"           | PHP\_INI\_ALL
  elog.filter\_http\_separator        | NULL            | PHP\_INI\_ALL
  elog.filter\_http\_encode           | "0"             | PHP\_INI\_ALL
  elog.filter\_timestamp\_format      | NULL            | PHP\_INI\_ALL
@@ -127,6 +128,12 @@ The default value is Off.
 Set whether the Unicode Escape processed by elog\_filter\_to\_json().
 
 The default value is On.
+
+## elog.filter\_json\_assoc _boolean_
+
+Set whether to get associative array as a array in elog\_filter\_to\_json().
+
+The default value is Off.
 
 ## elog.filter\_http\_separator _string_
 

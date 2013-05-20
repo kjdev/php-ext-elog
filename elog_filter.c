@@ -20,8 +20,8 @@ ZEND_DECLARE_MODULE_GLOBALS(elog)
 
 #define elog_err(_flag,...) php_error_docref(NULL TSRMLS_CC, _flag, __VA_ARGS__)
 
-#define ELOG_TYPE_ARRAY  1
-#define ELOG_TYPE_OBJECT 2
+#define ELOG_TYPE_ARRAY 1
+#define ELOG_TYPE_ASSOC 2
 
 #define ELOG_BUFFER_APPEND_SPACES(_buf, _num)                       \
     do {                                                            \
@@ -46,7 +46,7 @@ elog_array_type(zval *val TSRMLS_DC)
     p = myht->pListHead;
     while (p) {
         if (p->nKeyLength || index != p->h) {
-            return ELOG_TYPE_OBJECT;
+            return ELOG_TYPE_ASSOC;
         }
         p = p->pListNext;
         index++;
@@ -69,7 +69,7 @@ elog_array_element_dump(zval **zv TSRMLS_DC, int num_args,
 
     ELOG_BUFFER_APPEND_SPACES(buf, level+1);
 
-    if (array_type == ELOG_TYPE_OBJECT) {
+    if (array_type == ELOG_TYPE_ASSOC) {
         if (hash_key->nKeyLength == 0) {
             smart_str_append_long(buf, (long)hash_key->h);
         } else {
@@ -205,7 +205,7 @@ elog_var_dump(zval **struc, int level, smart_str *buf TSRMLS_DC)
             is_temp = 0;
             goto head_done;
         case IS_OBJECT:
-            array_type = ELOG_TYPE_OBJECT;
+            array_type = ELOG_TYPE_ASSOC;
 #if ZEND_MODULE_API_NO >= 20090626
             myht = Z_OBJDEBUG_PP(struc, is_temp);
 #else
@@ -322,7 +322,7 @@ elog_json_array_append(json_t *obj, zval *val TSRMLS_DC)
             }
             break;
         case IS_OBJECT:
-            json_type = ELOG_TYPE_OBJECT;
+            json_type = ELOG_TYPE_ASSOC;
             element = json_object();
             if (!element) {
                 return;
@@ -389,7 +389,7 @@ elog_json_object_append(json_t *obj, char *key, zval *val TSRMLS_DC)
             break;
         case IS_OBJECT:
             element = json_object();
-            json_type = ELOG_TYPE_OBJECT;
+            json_type = ELOG_TYPE_ASSOC;
             if (!element) {
                 return;
             }
@@ -1039,7 +1039,7 @@ ZEND_FUNCTION(elog_filter_to_json)
     long level = EL_LEVEL_ALL;
     json_t *obj = NULL;
     char *tmp_str, *label_scalar;
-    int json_type = ELOG_TYPE_OBJECT;
+    int json_type = ELOG_TYPE_ASSOC;
     int json_flags = JSON_COMPACT | JSON_ENCODE_ANY | JSON_PRESERVE_ORDER;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
@@ -1081,12 +1081,14 @@ ZEND_FUNCTION(elog_filter_to_json)
             json_object_set_new(obj, label_scalar, json_string(Z_STRVAL_P(msg)));
             break;
         case IS_ARRAY:
-            json_type = elog_array_type(msg TSRMLS_CC);
-            if (json_type == ELOG_TYPE_ARRAY) {
-                json_delete(obj);
-                obj = json_array();
-                if (!obj) {
-                    return;
+            if (!ELOG_G(json_assoc)) {
+                json_type = elog_array_type(msg TSRMLS_CC);
+                if (json_type == ELOG_TYPE_ARRAY) {
+                    json_delete(obj);
+                    obj = json_array();
+                    if (!obj) {
+                        return;
+                    }
                 }
             }
         case IS_OBJECT:
@@ -1523,7 +1525,7 @@ ZEND_FUNCTION(elog_filter_add_request)
             json_t *element = json_object();
             if (element) {
                 if (elog_var_json(request, element,
-                                  ELOG_TYPE_OBJECT TSRMLS_CC) == 0) {
+                                  ELOG_TYPE_ASSOC TSRMLS_CC) == 0) {
                     json_object_set_new(json, label_request, element);
                 } else {
                     json_delete(element);

@@ -50,6 +50,7 @@ ZEND_BEGIN_MODULE_GLOBALS(elog)
     char *timestamp_format;
     zend_bool array_assoc;
     zend_bool json_unicode_escape;
+    zend_bool json_assoc;
     char *http_separator;
     long http_encode;
     char *exec_filter;

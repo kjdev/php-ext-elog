@@ -705,6 +705,9 @@ ZEND_INI_BEGIN()
     STD_ZEND_INI_BOOLEAN("elog.filter_json_unicode_escape", "On",
                          ZEND_INI_ALL, OnUpdateBool, json_unicode_escape,
                          zend_elog_globals, elog_globals)
+    STD_ZEND_INI_BOOLEAN("elog.filter_json_assoc", "Off",
+                         ZEND_INI_ALL, OnUpdateBool, json_assoc,
+                         zend_elog_globals, elog_globals)
     STD_ZEND_INI_ENTRY("elog.filter_http_separator", (char *)NULL,
                        ZEND_INI_ALL, OnUpdateString, http_separator,
                        zend_elog_globals, elog_globals)
@@ -963,6 +966,7 @@ elog_init_globals(zend_elog_globals *elog_globals)
     elog_globals->timestamp_format = NULL;
     elog_globals->array_assoc = 0;
     elog_globals->json_unicode_escape = 1;
+    elog_globals->json_assoc = 0;
     elog_globals->http_separator = NULL;
     elog_globals->http_encode = 0;
     elog_globals->exec_filter = NULL;
