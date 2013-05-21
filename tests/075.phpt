@@ -14,6 +14,10 @@ $log = dirname(__FILE__) . "/tmp_074.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
+if (isset($_REQUEST)) {
+    unset($_REQUEST);
+}
+
 echo "[ append: elog_filter_add_request ]\n";
 var_dump(elog_append_filter('elog_filter_add_request'));
 
