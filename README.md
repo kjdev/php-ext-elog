@@ -1,6 +1,8 @@
 
 # elog function Extension for PHP
 
+[![Build Status](https://travis-ci.org/kjdev/php-ext-elog.png?branch=master)](https://travis-ci.org/kjdev/php-ext-elog)
+
 This extension allows elog function.
 
 elog is a function which is an extension of the error\_log.
