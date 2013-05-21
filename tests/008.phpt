@@ -14,14 +14,16 @@ if (!extension_loaded('elog')) {
 $log = dirname(__FILE__) . "/tmp_008.log";
 $host = "http://127.0.0.1:12342";
 
-function http_client_test($host) {
-    echo "=== $host ===\n";
-    elog("dummy", 11, $host);
-}
+echo "=== $host ===\n";
 
-http_server_test($host, $log);
+$pid = http_server_test($host, $log);
 
+elog("dummy", 11, $host);
+
+file_wait($log);
 file_dump($log);
+
+server_finish($pid);
 ?>
 --EXPECTF--
 === http://127.0.0.1:12342 ===

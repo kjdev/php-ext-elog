@@ -14,14 +14,16 @@ if (!extension_loaded('elog')) {
 $log = dirname(__FILE__) . "/tmp_009.log";
 $host = "http://127.0.0.1:12342";
 
-function http_client_test($host) {
-    echo "=== $host ===\n";
-    elog("dummy", 11, $host, "Content-Type: application/x-www-form-urlencoded\nUser-Agent: Mozilla/4.0 (Compatible; MSIE 6.0; Windows NT 5.1;)\nReferer: http://xxx.yyy.zzz/index.html");
-}
+echo "=== $host ===\n";
 
-http_server_test($host, $log);
+$pid = http_server_test($host, $log);
 
+elog("dummy", 11, $host, "Content-Type: application/x-www-form-urlencoded\nUser-Agent: Mozilla/4.0 (Compatible; MSIE 6.0; Windows NT 5.1;)\nReferer: http://xxx.yyy.zzz/index.html");
+
+file_wait($log);
 file_dump($log);
+
+server_finish($pid);
 ?>
 --EXPECTF--
 === http://127.0.0.1:12342 ===

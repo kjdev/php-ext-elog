@@ -23,6 +23,9 @@ ZEND_DECLARE_MODULE_GLOBALS(elog)
 #define ELOG_TYPE_ARRAY 1
 #define ELOG_TYPE_ASSOC 2
 
+#define ELOG_MODE_DUMP    1
+#define ELOG_MODE_CONVERT 2
+
 #define ELOG_BUFFER_APPEND_SPACES(_buf, _num)                       \
     do {                                                            \
         char *tmp_spaces;                                           \
@@ -33,7 +36,7 @@ ZEND_DECLARE_MODULE_GLOBALS(elog)
     } while(0)
 
 static inline void elog_var_dump(zval **struc, int level,
-                                 smart_str *buf TSRMLS_DC);
+                                 smart_str *buf, int mode TSRMLS_DC);
 
 static inline int
 elog_array_type(zval *val TSRMLS_DC)
@@ -92,7 +95,7 @@ elog_array_element_dump(zval **zv TSRMLS_DC, int num_args,
         smart_str_appendl(buf, ": ", 2);
     }
 
-    elog_var_dump(zv, level+2, buf TSRMLS_CC);
+    elog_var_dump(zv, level+2, buf, ELOG_MODE_DUMP TSRMLS_CC);
 
     smart_str_appendl(buf, PHP_EOL, strlen(PHP_EOL));
 
@@ -133,7 +136,7 @@ elog_object_element_dump(zval **zv TSRMLS_DC, int num_args,
 
     smart_str_appendl(buf, ": ", 2);
 
-    elog_var_dump(zv, level+2, buf TSRMLS_CC);
+    elog_var_dump(zv, level+2, buf, ELOG_MODE_DUMP TSRMLS_CC);
 
     smart_str_appendl(buf, PHP_EOL, strlen(PHP_EOL));
 
@@ -141,7 +144,7 @@ elog_object_element_dump(zval **zv TSRMLS_DC, int num_args,
 }
 
 static inline void
-elog_var_dump(zval **struc, int level, smart_str *buf TSRMLS_DC)
+elog_var_dump(zval **struc, int level, smart_str *buf, int mode TSRMLS_DC)
 {
     HashTable *myht;
 #if ZEND_MODULE_API_NO >= 20100525
@@ -158,14 +161,24 @@ elog_var_dump(zval **struc, int level, smart_str *buf TSRMLS_DC)
 
     switch (Z_TYPE_PP(struc)) {
         case IS_BOOL:
-            if (Z_LVAL_PP(struc)) {
-                smart_str_appendl(buf, "true", 4);
+            if (mode == ELOG_MODE_CONVERT) {
+                if (Z_LVAL_PP(struc)) {
+                    smart_str_append_long(buf, 1);
+                } else {
+                    smart_str_append_long(buf, 0);
+                }
             } else {
-                smart_str_appendl(buf, "false", 5);
+                if (Z_LVAL_PP(struc)) {
+                    smart_str_appendl(buf, "true", 4);
+                } else {
+                    smart_str_appendl(buf, "false", 5);
+                }
             }
             break;
         case IS_NULL:
-            smart_str_appendl(buf, "NULL", 4);
+            if (mode != ELOG_MODE_CONVERT) {
+                smart_str_appendl(buf, "NULL", 4);
+            }
             break;
         case IS_LONG:
             smart_str_append_long(buf, Z_LVAL_PP(struc));
@@ -177,16 +190,20 @@ elog_var_dump(zval **struc, int level, smart_str *buf TSRMLS_DC)
             efree(tmp_str);
             break;
         case IS_STRING:
-            tmp_str = php_addcslashes(Z_STRVAL_PP(struc), Z_STRLEN_PP(struc),
-                                      &tmp_len, 0, "\"\\", 2 TSRMLS_CC);
-            tmp_str2 = php_str_to_str_ex(tmp_str, tmp_len, "\0", 1,
-                                         "\" . '\\0' . \"", 12,
-                                         &tmp_len2, 0, NULL);
-            smart_str_appendc(buf, '"');
-            smart_str_appendl(buf, tmp_str2, tmp_len2);
-            smart_str_appendc(buf, '"');
-            efree(tmp_str2);
-            efree(tmp_str);
+            if (mode == ELOG_MODE_CONVERT) {
+                smart_str_appendl(buf, Z_STRVAL_PP(struc), Z_STRLEN_PP(struc));
+            } else {
+                tmp_str = php_addcslashes(Z_STRVAL_PP(struc), Z_STRLEN_PP(struc),
+                                          &tmp_len, 0, "\"\\", 2 TSRMLS_CC);
+                tmp_str2 = php_str_to_str_ex(tmp_str, tmp_len, "\0", 1,
+                                             "\" . '\\0' . \"", 12,
+                                             &tmp_len2, 0, NULL);
+                smart_str_appendc(buf, '"');
+                smart_str_appendl(buf, tmp_str2, tmp_len2);
+                smart_str_appendc(buf, '"');
+                efree(tmp_str2);
+                efree(tmp_str);
+            }
             break;
         case IS_ARRAY:
             array_type = elog_array_type(*struc TSRMLS_CC);
@@ -983,7 +1000,7 @@ ZEND_FUNCTION(elog_filter_to_string)
     }
 
     if (Z_TYPE_P(msg) != IS_STRING) {
-        elog_var_dump(&msg, 1, &buf TSRMLS_CC);
+        elog_var_dump(&msg, 1, &buf, ELOG_MODE_DUMP TSRMLS_CC);
     } else {
         smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
     }
@@ -1270,21 +1287,12 @@ ZEND_FUNCTION(elog_filter_add_eol)
     } else {
         smart_str buf = {0};
 
-        if (Z_TYPE_P(msg) == IS_BOOL) {
-            smart_str_append_long(&buf, Z_LVAL_P(msg));
-        } else {
-            if (Z_TYPE_P(msg) != IS_STRING) {
-                convert_to_string(msg);
-            }
-            smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-        }
+        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
 
         ELOG_ADD_EOL(buf);
-
         smart_str_0(&buf);
 
         RETVAL_STRINGL(buf.c, buf.len, 1);
-
         smart_str_free(&buf);
     }
 }
@@ -1343,14 +1351,7 @@ ZEND_FUNCTION(elog_filter_add_fileline)
     } else {
         smart_str buf = {0};
 
-        if (Z_TYPE_P(msg) == IS_BOOL) {
-            smart_str_append_long(&buf, Z_LVAL_P(msg));
-        } else {
-            if (Z_TYPE_P(msg) != IS_STRING) {
-                convert_to_string(msg);
-            }
-            smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-        }
+        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
 
         if (filename) {
             ELOG_BEGIN_IS_JSON_STRING(buf);
@@ -1441,14 +1442,7 @@ ZEND_FUNCTION(elog_filter_add_timestamp)
     } else {
         smart_str buf = {0};
 
-        if (Z_TYPE_P(msg) == IS_BOOL) {
-            smart_str_append_long(&buf, Z_LVAL_P(msg));
-        } else {
-            if (Z_TYPE_P(msg) != IS_STRING) {
-                convert_to_string(msg);
-            }
-            smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-        }
+        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
 
         if (timestamp) {
             ELOG_BEGIN_IS_JSON_STRING(buf);
@@ -1508,18 +1502,12 @@ ZEND_FUNCTION(elog_filter_add_request)
     if (zend_hash_find(&EG(symbol_table), "_REQUEST", sizeof("_REQUEST"),
                        (void **)&request) == SUCCESS) {
         if (ht_retval) {
+            Z_ADDREF_PP(request);
             ELOG_HASH_ADD_ZVAL(ht_retval, label_request, request);
         } else {
             smart_str buf = {0};
 
-            if (Z_TYPE_P(msg) == IS_BOOL) {
-                smart_str_append_long(&buf, Z_LVAL_P(msg));
-            } else {
-                if (Z_TYPE_P(msg) != IS_STRING) {
-                    convert_to_string(msg);
-                }
-                smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-            }
+            elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
 
             ELOG_BEGIN_IS_JSON_STRING(buf);
             json_t *element = json_object();
@@ -1539,7 +1527,7 @@ ZEND_FUNCTION(elog_filter_add_request)
             smart_str_appendl(&buf, label_request, strlen(label_request));
             smart_str_appendl(&buf, ": ", 2);
 
-            elog_var_dump(request, 1, &buf TSRMLS_CC);
+            elog_var_dump(request, 1, &buf, ELOG_MODE_DUMP TSRMLS_CC);
 
             smart_str_0(&buf);
 
@@ -1553,14 +1541,7 @@ ZEND_FUNCTION(elog_filter_add_request)
         } else {
             smart_str buf = {0};
 
-            if (Z_TYPE_P(msg) == IS_BOOL) {
-                smart_str_append_long(&buf, Z_LVAL_P(msg));
-            } else {
-                if (Z_TYPE_P(msg) != IS_STRING) {
-                    convert_to_string(msg);
-                }
-                smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-            }
+            elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
 
             ELOG_BEGIN_IS_JSON_STRING(buf);
             ELOG_JSON_SET(label_request, json_null());
@@ -1630,10 +1611,6 @@ ZEND_FUNCTION(elog_filter_add_level)
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
         COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        /*
-        *return_value = *msg;
-        zval_copy_ctor(return_value);
-        */
         Z_ADDREF_P(msg);
         ht_retval = Z_ARRVAL_P(return_value);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
@@ -1650,14 +1627,7 @@ ZEND_FUNCTION(elog_filter_add_level)
     } else {
         smart_str buf = {0};
 
-        if (Z_TYPE_P(msg) == IS_BOOL) {
-            smart_str_append_long(&buf, Z_LVAL_P(msg));
-        } else {
-            if (Z_TYPE_P(msg) != IS_STRING) {
-                convert_to_string(msg);
-            }
-            smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-        }
+        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
 
         if (level_name) {
             ELOG_BEGIN_IS_JSON_STRING(buf);

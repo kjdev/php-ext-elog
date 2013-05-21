@@ -24,6 +24,17 @@ echo "=== output ===\n";
 file_dump($log);
 echo "\n";
 
+echo "\n[ boolean ]\n";
+elog(true);
+echo "=== output ===\n";
+file_dump($log);
+echo "\n";
+
+echo "\n[ integer ]\n";
+elog(12345);
+echo "=== output ===\n";
+file_dump($log);
+echo "\n";
 
 function test($format, $out) {
     echo "\n[ elog.filter_timestamp_format: $format ]\n";
@@ -64,6 +75,16 @@ bool(true)
 [ default ]
 === output ===
 dummy
+elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
+
+[ boolean ]
+=== output ===
+1
+elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
+
+[ integer ]
+=== output ===
+12345
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 
 [ elog.filter_timestamp_format: F j, Y, g:i a ]

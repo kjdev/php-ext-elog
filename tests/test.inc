@@ -87,71 +87,66 @@ function file_dump($file, &$buf = null) {
     }
 }
 
+function file_wait($file) {
+    for ($i = 0; $i < 5; $i++) {
+        usleep(500);
+        if (is_file($file)) {
+            $ret = filesize($file);
+            if ($ret !== false && $ret > 0) {
+                return;
+            }
+        }
+    }
+}
+
+function server_finish($pid) {
+    if ($pid) {
+        posix_kill($pid, SIGHUP);
+        pcntl_wait($status);
+    }
+    exit(1);
+}
+
 function tcp_server_test($connect, $output = null)
 {
-    function shutdown() {
-        posix_kill(posix_getpid(), SIGHUP);
-    }
-
     if ($pid = pcntl_fork()) {
-        return;
+        usleep(500);
+        return $pid;
     }
 
-    register_shutdown_function('shutdown');
+    $host = parse_url($connect, PHP_URL_HOST);
+    $port = parse_url($connect, PHP_URL_PORT);
 
-    if (posix_setsid() < 0) {
-        return;
+    $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+    if (!is_resource($socket)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        exit(1);
     }
 
-    if ($pid = pcntl_fork()) {
-        /*
-        $socket = stream_socket_server($connect, $errno, $errstr);
-        if (!$socket) {
-            echo "$errstr ($errno)\n";
-            exiit(1);
-        }
-        $sock = stream_socket_accept($socket);
-        if (!$sock) {
-            exit(1);
-        }
-        //stream_set_blocking($sock, 0);
-        $buf = stream_get_line($sock, 8192);
-        fclose($sock);
-        stream_socket_shutdown($socket, STREAM_SHUT_WR);
-        */
+    if (!socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        socket_close($socket);
+        exit(1);
+    }
 
-        $host = parse_url($connect, PHP_URL_HOST);
-        $port = parse_url($connect, PHP_URL_PORT);
+    if (!socket_bind($socket, $host, $port)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        socket_close($socket);
+        exit(1);
+    }
 
-        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        if (!is_resource($socket)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            exit(1);
-        }
+    if (!socket_listen($socket, 0)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        socket_close($socket);
+        exit(1);
+    }
 
-        if (!socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            socket_close($socket);
-            exit(1);
-        }
+    $r = array($socket);
+    $w = array($socket);
+    $e = array($socket);
+    $timeout = 3;
 
-        if (!socket_bind($socket, $host, $port)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            socket_close($socket);
-            exit(1);
-        }
-
-        if (!socket_listen($socket, 0)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            socket_close($socket);
-            exit(1);
-        }
-
-        $r = array($socket);
-        $w = array($socket);
-        $e = array($socket);
-        $timeout = 3;
-
+    while (1) {
         if (socket_select($r, $w, $e, $timeout) == 1) {
             $sock = socket_accept($socket);
         } else {
@@ -171,71 +166,38 @@ function tcp_server_test($connect, $output = null)
         }
 
         socket_close($sock);
-
-        socket_close($socket);
-
-        pcntl_wait($status);
-        exit(0);
     }
 
-    if (function_exists("tcp_client_test")) {
-        call_user_func_array("tcp_client_test", array($connect));
-    }
-
-    usleep(500);
+    socket_close($socket);
 }
 
 function udp_server_test($connect, $output = null)
 {
-    function shutdown() {
-        posix_kill(posix_getpid(), SIGHUP);
-    }
-
     if ($pid = pcntl_fork()) {
-        return;
+        usleep(500);
+        return $pid;
     }
 
-    register_shutdown_function('shutdown');
+    $host = parse_url($connect, PHP_URL_HOST);
+    $port = parse_url($connect, PHP_URL_PORT);
 
-    if (posix_setsid() < 0) {
-        return;
+    $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+    if (!is_resource($socket)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        exit(1);
     }
 
-    if ($pid = pcntl_fork()) {
-        /*
-        $socket = stream_socket_server($connect, $errno, $errstr,
-                                       STREAM_SERVER_BIND);
-        if ($socket) {
-            $buf = stream_socket_recvfrom($socket, 8192);
-            if ($output) {
-                file_put_contents($output, $buf);
-            }
-            stream_socket_shutdown($socket, STREAM_SHUT_WR);
-        } else {
-            echo "$errstr ($errno)\n";
-            exit(1);
-        }
-        */
+    if (!socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        exit(1);
+    }
 
-        $host = parse_url($connect, PHP_URL_HOST);
-        $port = parse_url($connect, PHP_URL_PORT);
+    if (!socket_bind($socket, $host, $port)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        exit(1);
+    }
 
-        $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-        if (!is_resource($socket)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            exit(1);
-        }
-
-        if (!socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            exit(1);
-        }
-
-        if (!socket_bind($socket, $host, $port)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            exit(1);
-        }
-
+    while (1) {
         $from = '';
         $port = 0;
 
@@ -245,71 +207,52 @@ function udp_server_test($connect, $output = null)
             file_put_contents($output, $buf);
         }
 
-        socket_close($socket);
-
-        pcntl_wait($status);
-        exit(0);
+        usleep(300);
     }
 
-    if (function_exists("udp_client_test")) {
-        call_user_func_array("udp_client_test", array($connect));
-    }
-
-    usleep(500);
+    socket_close($socket);
 }
 
 function http_server_test($connect, $output = null)
 {
-    function shutdown() {
-        posix_kill(posix_getpid(), SIGHUP);
-        pcntl_waitpid(posix_getpid(), $status);
-    }
-
     if ($pid = pcntl_fork()) {
-        pcntl_wait($status);
-        exit(0);
+        usleep(500);
+        return $pid;
     }
 
-    register_shutdown_function('shutdown');
+    $host = parse_url($connect, PHP_URL_HOST);
+    $port = parse_url($connect, PHP_URL_PORT);
 
-    if (posix_setsid() < 0) {
+    $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+    if (!is_resource($socket)) {
+        echo socket_strerror(socket_last_error()), "\n";
         exit(1);
     }
 
-    if ($pid = pcntl_fork()) {
-        $host = parse_url($connect, PHP_URL_HOST);
-        $port = parse_url($connect, PHP_URL_PORT);
+    if (!socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        socket_close($socket);
+        exit(1);
+    }
 
-        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        if (!is_resource($socket)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            exit(1);
-        }
+    if (!socket_bind($socket, $host, $port)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        socket_close($socket);
+        exit(1);
+    }
 
-        if (!socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            socket_close($socket);
-            exit(1);
-        }
-        //socket_set_option($sock, SOL_SOCKET, SO_KEEPALIVE, 0);
+    if (!socket_listen($socket, 0)) {
+        echo socket_strerror(socket_last_error()), "\n";
+        socket_close($socket);
+        exit(1);
+    }
 
-        if (!socket_bind($socket, $host, $port)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            socket_close($socket);
-            exit(1);
-        }
+    $r = array($socket);
+    $w = array($socket);
+    $e = array($socket);
+    $timeout = 3;
 
-        if (!socket_listen($socket, 0)) {
-            echo socket_strerror(socket_last_error()), "\n";
-            socket_close($socket);
-            exit(1);
-        }
-
-        $r = array($socket);
-        $w = array($socket);
-        $e = array($socket);
-        $timeout = 3;
-
+    while (1) {
         if (socket_select($r, $w, $e, $timeout) == 1) {
             $sock = socket_accept($socket);
         } else {
@@ -382,15 +325,6 @@ function http_server_test($connect, $output = null)
         socket_write($sock, $response, strlen($response));
         socket_close($sock);
 
-        socket_close($socket);
-
-        pcntl_wait($status);
-        exit(0);
     }
-
-    if (function_exists("http_client_test")) {
-        call_user_func_array("http_client_test", array($connect));
-    }
-
-    usleep(500);
+    socket_close($socket);
 }

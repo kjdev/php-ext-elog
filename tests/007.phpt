@@ -14,14 +14,16 @@ if (!extension_loaded('elog')) {
 $log = dirname(__FILE__) . "/tmp_007.log";
 $host = "udp://127.0.0.1:12342";
 
-function udp_client_test($host) {
-    echo "=== $host ===\n";
-    elog("dummy", 11, $host);
-}
+echo "=== $host ===\n";
 
-udp_server_test($host, $log);
+$pid = udp_server_test($host, $log);
 
+elog("dummy", 11, $host);
+
+file_wait($log);
 file_dump($log);
+
+server_finish($pid);
 ?>
 --EXPECTF--
 === udp://127.0.0.1:12342 ===

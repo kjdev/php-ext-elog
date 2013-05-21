@@ -33,6 +33,20 @@ test("dummy\n", $log);
 echo "\n[ Test 3 ]\n";
 test("dummy\n\n", $log);
 
+echo "\n[ Test 4 ]\n";
+test(true, $log);
+
+echo "\n[ Test 5 ]\n";
+test(12345, $log);
+
+echo "\n[ Test 6 ]\n";
+test(array("dummy"), $log);
+
+echo "\n[ Test 7 ]\n";
+$obj = new stdClass;
+$obj->dummy = 'dummy';
+test($obj, $log);
+
 ?>
 DONE
 --EXPECTF--
@@ -51,4 +65,20 @@ dummy
 === output ===
 dummy
 
-DONE
+
+[ Test 4 ]
+=== output ===
+1
+
+[ Test 5 ]
+=== output ===
+12345
+
+[ Test 6 ]
+
+Notice: Array to string conversion in %s on line %d
+=== output ===
+Array
+[ Test 7 ]
+
+Catchable fatal error: Object of class stdClass could not be converted to string in %s on line %d
