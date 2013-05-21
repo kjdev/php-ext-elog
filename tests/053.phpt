@@ -170,27 +170,27 @@ stdClass {
 === alert ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
+  "elog_level": "ALERT"
 }
 === crit ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
+  "elog_level": "CRIT"
 }
 === err ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
+  "elog_level": "ERR"
 }
 === warning ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
+  "elog_level": "WARNING"
 }
 === notice ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
+  "elog_level": "NOTICE"
 }
 === info ===
 === debug ===

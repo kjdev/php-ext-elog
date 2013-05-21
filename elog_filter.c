@@ -939,6 +939,23 @@ ZEND_FUNCTION(elog_remove_filter)
         efree(str);                                             \
     }
 
+#define ELOG_FILTER_RETVAL_COPY_ARRAY(_val)  \
+    COPY_PZVAL_TO_ZVAL(*return_value, _val); \
+    Z_ADDREF_P(_val)
+
+
+#define ELOG_FILTER_RETVAL_COPY_OBJECT(_val)                         \
+    zval *tmp;                                                       \
+        if (Z_OBJ_HT_P(_val)->get_class_entry) {                     \
+            zend_class_entry *ce = Z_OBJCE_P(_val);                  \
+            object_init_ex(return_value, ce);                        \
+        } else {                                                     \
+            object_init(return_value);                               \
+        }                                                            \
+        zend_hash_copy(Z_OBJPROP_P(return_value), Z_OBJPROP_P(_val), \
+                       (copy_ctor_func_t)zval_add_ref,               \
+                       (void *)&tmp, sizeof(zval *))
+
 ZEND_FUNCTION(elog_get_filter)
 {
     char *filter = NULL;
@@ -1028,11 +1045,9 @@ ZEND_FUNCTION(elog_filter_to_array)
     }
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
         convert_to_array(return_value);
     } else {
         Z_ADDREF_P(msg);
@@ -1176,6 +1191,8 @@ ZEND_FUNCTION(elog_filter_to_http_query)
             smart_str_appendl(&buf, label_scalar, strlen(label_scalar));
             smart_str_appendl(&buf, "=", 1);
             smart_str_appendl(&buf, str, str_len);
+
+            efree(str);
             break;
         }
         case IS_ARRAY:
@@ -1279,11 +1296,9 @@ ZEND_FUNCTION(elog_filter_add_eol)
     }
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
     } else {
         smart_str buf = {0};
 
@@ -1331,12 +1346,10 @@ ZEND_FUNCTION(elog_filter_add_fileline)
     }
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
         ht_retval = Z_ARRVAL_P(return_value);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
         ht_retval = Z_OBJPROP_P(return_value);
     }
 
@@ -1425,12 +1438,10 @@ ZEND_FUNCTION(elog_filter_add_timestamp)
     timestamp = php_format_date(format, strlen(format), error_time, 1 TSRMLS_CC);
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
         ht_retval = Z_ARRVAL_P(return_value);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
         ht_retval = Z_OBJPROP_P(return_value);
     }
 
@@ -1490,12 +1501,10 @@ ZEND_FUNCTION(elog_filter_add_request)
     }
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
         ht_retval = Z_ARRVAL_P(return_value);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
         ht_retval = Z_OBJPROP_P(return_value);
     }
 
@@ -1610,12 +1619,10 @@ ZEND_FUNCTION(elog_filter_add_level)
     }
 
     if (Z_TYPE_P(msg) == IS_ARRAY) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
         ht_retval = Z_ARRVAL_P(return_value);
     } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        COPY_PZVAL_TO_ZVAL(*return_value, msg);
-        Z_ADDREF_P(msg);
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
         ht_retval = Z_OBJPROP_P(return_value);
     }
 

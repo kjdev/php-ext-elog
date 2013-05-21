@@ -230,7 +230,7 @@ stdClass {
   }
 }
 [ object ]
-object(stdClass)#%d (4) {
+object(stdClass)#%d (3) {
   ["a"]=>
   string(1) "A"
   ["b"]=>
@@ -245,13 +245,6 @@ object(stdClass)#%d (4) {
       ["z"]=>
       string(1) "Z"
     }
-  }
-  ["elog_request"]=>
-  array(2) {
-    ["test1"]=>
-    string(6) "TEST-1"
-    ["test2"]=>
-    string(6) "TEST-2"
   }
 }
 === output ===

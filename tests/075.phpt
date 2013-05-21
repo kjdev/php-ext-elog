@@ -184,7 +184,7 @@ stdClass {
   "elog_request": NULL
 }
 [ object ]
-object(stdClass)#%d (4) {
+object(stdClass)#%d (3) {
   ["a"]=>
   string(1) "A"
   ["b"]=>
@@ -200,8 +200,6 @@ object(stdClass)#%d (4) {
       string(1) "Z"
     }
   }
-  ["elog_request"]=>
-  NULL
 }
 === output ===
 stdClass {
