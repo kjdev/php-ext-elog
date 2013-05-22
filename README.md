@@ -163,31 +163,31 @@ The default value is "message".
 
 ## elog.filter\_label\_file _string_
 
-Set the field name of the file name in the elog\_filter\_add\_fileline.
+Set the field name of the file name in the elog\_filter\_add\_fileline().
 
 The default value is "elog\_file".
 
 ## elog.filter\_label\_line _string_
 
-Set the field name of the line in the elog\_filter\_add\_fileline.
+Set the field name of the line in the elog\_filter\_add\_fileline().
 
 The default value is "elog\_line".
 
 ## elog.filter\_label\_timestamp _string_
 
-Set the field name in the elog\_filter\_add\_timestamp.
+Set the field name in the elog\_filter\_add\_timestamp().
 
 The default value is "elog\_time".
 
 ## elog.filter\_label\_level _string_
 
-Set the field name in the elog\_filter\_add\_level.
+Set the field name in the elog\_filter\_add\_level().
 
 The default value is "elog\_level".
 
 ## elog.filter\_label\_request _string_
 
-Set the field name in the elog\_filter\_add\_request.
+Set the field name in the elog\_filter\_add\_request().
 
 The default value is "elog\_request".
 
@@ -389,7 +389,7 @@ register the filters available in the elog().
 
 * _callback_
 
-  The shutdown callback to register.
+  The filter callback to register.
 
 * _enabled_
 
@@ -411,7 +411,7 @@ return FALSE if the rname is already defined.
 
 bool **elog\_append\_filter** ( string _$name_ )
 
-Adds name to the list of filters attached to elog.
+Adds name to the list of filters attached to elog().
 
 ### Parameters
 
@@ -428,9 +428,9 @@ Returns TRUE on success or FALSE on failure.
 
 ### Description
 
-bool **elog\_append\_filter** ( string _$name_ )
+bool **elog\_prepend\_filter** ( string _$name_ )
 
-Adds name to the list of filters attached to elog.
+Adds name to the list of filters attached to elog().
 
 ### Parameters
 
