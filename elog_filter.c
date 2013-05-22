@@ -965,7 +965,7 @@ ZEND_FUNCTION(elog_get_filter)
     uint str_key_len;
     ulong num_key;
     HashPosition pos;
-    int i, buitin_count = 9;
+    int i, builtin_count = 9;
     char *builtin_name[9] = { "elog_filter_to_string",
                               "elog_filter_to_json",
                               "elog_filter_to_http_query",
@@ -984,7 +984,7 @@ ZEND_FUNCTION(elog_get_filter)
     array_init(return_value);
 
     ELOG_BEGIN_FILTER_GET(builtin);
-    for (i = 0; i < buitin_count; i++) {
+    for (i = 0; i < builtin_count; i++) {
         MAKE_STD_ZVAL(val);
         ZVAL_STRINGL(val, builtin_name[i], strlen(builtin_name[i]), 1);
         add_next_index_zval(arr, val);

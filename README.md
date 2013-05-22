@@ -241,7 +241,7 @@ filter function:
 * elog\_remove\_filter — Remove a filter from a elog
 * elog\_get\_filter — Retrieve list of elog filters
 
-buitin filter function:
+builtin filter function:
 
 * elog\_filter\_to\_string — converted to a string
 * elog\_filter\_to\_json — converted to a json string
@@ -260,7 +260,7 @@ buitin filter function:
 
 bool **elog** ( string _$message_ [, int _$type_ = 0 [, string _$destination_ [, string _$options_ ]]] )
 
-Calls the callback given by the first parameter with the parameters in params.
+Sends an error message.
 
 ### Parameters
 
@@ -292,8 +292,7 @@ Calls the callback given by the first parameter with the parameters in params.
 
 ### Return Values
 
-Returns the return value of the callback, or FALSE on error.
-
+Returns TRUE on success or FALSE on failure.
 
 ## elog\_emerg — elog: system is unusable
 
@@ -480,7 +479,7 @@ Retrieve the list of registered filters on the running system.
 
   name      | description
   ----      | -----------
-  buitin    | filter function of the built-in
+  builtin   | filter function of the built-in
   registers | registered in elog\_register\_filter()
   execute   | registered in elog.filter\_execute
   enabled   | valid filter
