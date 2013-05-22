@@ -65,5 +65,13 @@ if test "$PHP_ELOG" != "no"; then
 
     # PHP Extension
     PHP_NEW_EXTENSION(elog, elog.c elog_filter.c $JSON_SOURCE, $ext_shared)
+fi
 
+PHP_ARG_ENABLE(coverage, whether to enable coverage support,
+[  --enable-coverage     Enable coverage support])
+
+dnl coverage
+if test "$PHP_COVERAGE" != "no"; then
+    EXTRA_CFLAGS="--coverage"
+    PHP_SUBST(EXTRA_CFLAGS)
 fi

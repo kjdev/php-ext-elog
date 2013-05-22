@@ -172,7 +172,7 @@ static int
 elog_spawn_run(elog_spawn_t *self, char *message, int message_len TSRMLS_DC)
 {
     pid_t pid;
-    int ret;
+    int ret, write_len;
 
     if (posix_spawnp(&pid, self->args[0], &self->actions,
                      NULL, self->args, NULL) != 0) {
@@ -190,7 +190,7 @@ elog_spawn_run(elog_spawn_t *self, char *message, int message_len TSRMLS_DC)
         self->out[1] = -1;
     }
 
-    write(self->in[1], message, message_len);
+    write_len = write(self->in[1], message, message_len);
     close(self->in[1]);
     self->in[1] = -1;
 
