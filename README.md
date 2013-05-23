@@ -2,6 +2,7 @@
 # elog function Extension for PHP
 
 [![Build Status](https://travis-ci.org/kjdev/php-ext-elog.png?branch=master)](https://travis-ci.org/kjdev/php-ext-elog)
+[![Coverage Status](https://coveralls.io/repos/kjdev/php-ext-elog/badge.png)](https://coveralls.io/r/kjdev/php-ext-elog)
 
 This extension allows elog function.
 
@@ -673,6 +674,8 @@ If the scalar value of no-string, Add to log level after converted to a string.
 
 # Examples
 
+also refer to [example](http://api.at-ninja.jp/php-ext-elog/examples.html).
+
 ### default
 
     elog('dummy');
@@ -686,11 +689,11 @@ If the scalar value of no-string, Add to log level after converted to a string.
     elog('dummy', 10, '/path/to/command');
     /*
     same as:
-    system("echo 'dummy' | '/path/to/command');
-    // or
-    $process = popen('/path/to/command', 'w');
-    fwrite($process, 'dummy');
-    pclose($process);
+      system("echo 'dummy' | '/path/to/command');
+    or
+      $process = popen('/path/to/command', 'w');
+      fwrite($process, 'dummy');
+      pclose($process);
     */
 
 #### command option
@@ -698,11 +701,11 @@ If the scalar value of no-string, Add to log level after converted to a string.
     elog('dummy', 10, '/path/to/command', 'command option');
     /*
     same as:
-    system("echo 'dummy' | '/path/to/command command option');
-    // or
-    $process = popen('/path/to/command command option', 'w');
-    fwrite($process, 'dummy');
-    pclose($process);
+      system("echo 'dummy' | '/path/to/command command option');
+    or
+      $process = popen('/path/to/command command option', 'w');
+      fwrite($process, 'dummy');
+      pclose($process);
     */
 
 #### command output
@@ -748,9 +751,10 @@ POST method, Media type is application/x-www-form-urlencoded.
 
     ini_set('elog.default_type', 3);
     ini_set('elog.default_destination', '/path/to/file');
+    ini_set('elog.default_options', 'x y z');
 
     elog('dummy');
-    // The output to /path/to/file.
+    // The output to '/path/to/file x y z'.
 
     ini_set('elog.default_type', 2);
     ini_set('elog.default_destination', 'tcp://127.0.0.1:12342');
@@ -794,7 +798,7 @@ POST method, Media type is application/x-www-form-urlencoded.
     dummy-0dummy-1dummy-2dummy-3dummy-4dummy-5dummy-6dummy-7
     */
 
-#### filter: register
+#### filter
 
     function f1($val) {
         return $val . '-a';
@@ -845,7 +849,7 @@ POST method, Media type is application/x-www-form-urlencoded.
     ]
     */
 
-    elog(array(a => 'dummy', b => 'DUMMY'));
+    elog(array('a' => 'dummy', 'b' => 'DUMMY'));
     /* output:
     {
         "a": "dummy"
@@ -981,7 +985,7 @@ POST method, Media type is application/x-www-form-urlencoded.
     /*
     // output:
     dummy
-    elog_time: 20-May-2013 13:50:13 Asia/Tokyo
+    elog_time: "20-May-2013 13:50:13 Asia/Tokyo"
     */
 
     ini_set('elog.filter_timestamp_format', 'Y-m-d H:i:s');
@@ -1005,6 +1009,45 @@ POST method, Media type is application/x-www-form-urlencoded.
       "a": "dummy"
       "b": "DUMMY"
       "time": "1369025413"
+    }
+    */
+
+### filter: elog\_filter\_add\_request
+
+    elog_append_filter(array('elog_filter_add_request','elog_filter_to_string'));
+
+    // REQUEST
+    $_REQUEST['dummy'] = 'DUMMY';
+
+    elog('dummy');
+    /*
+    // output:
+    dummy
+    elog_request: {
+      "dummy": "DUMMY"
+    }
+    */
+
+    elog(array('dummy'));
+    /*
+    // output:
+    {
+      0: "dummy"
+      "elog_request": {
+        "dummy": "DUMMY"
+      }
+    }
+    */
+
+    elog(array('a' => 'dummy', 'b' => 'DUMMY'));
+    /*
+    // output:
+    {
+      "a": "dummy"
+      "b": "DUMMY"
+      "elog_request": {
+        "dummy": "DUMMY"
+      }
     }
     */
 
@@ -1093,3 +1136,8 @@ POST method, Media type is application/x-www-form-urlencoded.
     // output: /path/to/file
     PHP Notice:  Undefined variable: dummy in /path/to/test.php on line 2
     */
+
+# Related
+
+* [code coverage report](https://coveralls.io/r/kjdev/php-ext-elog)
+* [api document](https://coveralls.io/r/kjdev/php-ext-elog)
