@@ -3,7 +3,7 @@
 #define PHP_ELOG_H
 
 #define ELOG_NAMESPACE "elog"
-#define ELOG_EXT_VERSION "0.1.0"
+#define ELOG_EXT_VERSION "0.1.1"
 
 #define EL_FILTER_APPEND  1
 #define EL_FILTER_PREPEND 2

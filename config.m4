@@ -68,7 +68,7 @@ if test "$PHP_ELOG" != "no"; then
 fi
 
 PHP_ARG_ENABLE(coverage, whether to enable coverage support,
-[  --enable-coverage     Enable coverage support])
+[  --enable-coverage     Enable coverage support], no, no)
 
 dnl coverage
 if test "$PHP_COVERAGE" != "no"; then
