@@ -1140,4 +1140,4 @@ POST method, Media type is application/x-www-form-urlencoded.
 # Related
 
 * [code coverage report](https://coveralls.io/r/kjdev/php-ext-elog)
-* [api document](https://coveralls.io/r/kjdev/php-ext-elog)
+* [api document](http://api.at-ninja.jp/php-ext-elog/)
