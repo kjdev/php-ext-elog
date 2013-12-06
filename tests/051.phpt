@@ -6,9 +6,6 @@ elog_filter_add_eol
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_051.log";
 ini_set('elog.default_type', 3);

@@ -8,10 +8,6 @@ log_errors=On
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
-
 $log_0 = dirname(__FILE__) . "/tmp_011_0.log";
 $log_1 = dirname(__FILE__) . "/tmp_011_1.log";
 $log_2 = dirname(__FILE__) . "/tmp_011_2.log";

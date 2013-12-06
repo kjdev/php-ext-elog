@@ -6,9 +6,6 @@ elog_get_filter
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 function filter_test($val) {
     return $val;

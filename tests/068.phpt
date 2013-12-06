@@ -6,9 +6,6 @@ elog_filter_to_array
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_068.log";
 ini_set('elog.default_type', 3);

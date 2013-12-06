@@ -9,9 +9,6 @@ elog.throw_exception_hook=On
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log_1 = dirname(__FILE__) . "/tmp_066_0.log";
 $log_2 = dirname(__FILE__) . "/tmp_066_1.log";

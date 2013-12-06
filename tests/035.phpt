@@ -6,9 +6,6 @@ elog_register_filter: EL_FILTER_APPEND or EL_FILTER_PREPEND
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 function filter_test($val) {
     return $val;

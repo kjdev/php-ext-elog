@@ -6,9 +6,6 @@ elog_filter_add_fileline
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_046.log";
 ini_set('elog.default_type', 3);
@@ -41,14 +38,14 @@ bool(true)
 === output ===
 dummy
 elog_file: %s/046.php
-elog_line: 16
+elog_line: 13
 [ Test 2 ]
 === output ===
 1
 elog_file: %s/046.php
-elog_line: 21
+elog_line: 18
 [ Test 3 ]
 === output ===
 12345
 elog_file: %s/046.php
-elog_line: 26
+elog_line: 23

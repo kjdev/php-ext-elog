@@ -7,10 +7,6 @@ elog tcp/ip: type=11,host=localhost
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
-
 $log = dirname(__FILE__) . "/tmp_006.log";
 $host = "tcp://localhost:12342";
 

@@ -13,9 +13,6 @@ elog.filter_label_request="req"
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_060.log";
 ini_set('elog.default_type', 3);
@@ -63,10 +60,10 @@ elog.filter_label_level --> level
 elog.filter_label_request --> req
 
 [ default ]
-{"msg":"dummy","file":"%s/060.php","line":21,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","req":{"dummy":"DUMMY"}}
+{"msg":"dummy","file":"%s/060.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","req":{"dummy":"DUMMY"}}
 ["dummy"]
 file: %s/060.php
-line: 24
+line: 21
 time: %d-%s-%d %d:%d:%d Asia/Tokyo
 level: ERR
 req: {

@@ -12,9 +12,6 @@ elog.override_error_log=On
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log_1 = dirname(__FILE__) . "/tmp_062_0.log";
 $log_2 = dirname(__FILE__) . "/tmp_062_1.log";

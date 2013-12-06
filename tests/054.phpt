@@ -7,9 +7,6 @@ date.timezone=Asia/Tokyo
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_054.log";
 ini_set('elog.default_type', 3);
@@ -56,20 +53,20 @@ bool(true)
 [ append: elog_filter_add_fileline ]
 bool(true)
 === normal ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":16}
+{"message":"dummy","elog_file":"%s/054.php","elog_line":13}
 === err ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":21}
+{"message":"dummy","elog_file":"%s/054.php","elog_line":18}
 
 [ append: elog_filter_add_timestamp ]
 bool(true)
 === normal ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":16,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
+{"message":"dummy","elog_file":"%s/054.php","elog_line":13,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
 === err ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
+{"message":"dummy","elog_file":"%s/054.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
 
 [ append: elog_filter_add_level ]
 bool(true)
 === normal ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":16,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
+{"message":"dummy","elog_file":"%s/054.php","elog_line":13,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
 === err ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_level":"ERR"}
+{"message":"dummy","elog_file":"%s/054.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_level":"ERR"}

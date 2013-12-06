@@ -6,9 +6,6 @@ elog_prepend_filter: array
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 echo "=== Filter register ===\n";
 function filter_test($val) {

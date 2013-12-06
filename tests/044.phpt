@@ -6,9 +6,6 @@ elog_filter_to_json: ini=elog.filter_json_unicode_escape
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_044.log";
 ini_set('elog.default_type', 3);

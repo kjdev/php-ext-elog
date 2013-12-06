@@ -6,9 +6,6 @@ elog_filter: ini=elog.filter_execute
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_056.log";
 ini_set('elog.default_type', 3);
@@ -126,7 +123,7 @@ string(5) "dummy"
 === output ===
 dummy
 elog_file: %s/056.php
-elog_line: 44
+elog_line: 41
 === dump ===
 array(1) {
   [0]=>
@@ -137,7 +134,7 @@ array(1) {
   "dummy"
 ]
 elog_file: %s/056.php
-elog_line: 44
+elog_line: 41
 === dump ===
 object(stdClass)#%d (0) {
 }
@@ -145,7 +142,7 @@ object(stdClass)#%d (0) {
 stdClass {
 }
 elog_file: %s/056.php
-elog_line: 44
+elog_line: 41
 
 [ Test 3 ]
 === elog_get_filter: execute ===
@@ -180,7 +177,7 @@ string(5) "dummy"
 dummy[fn_1st]
 [Test::me_2nd]
 elog_file: %s/056.php
-elog_line: 44
+elog_line: 41
 === dump ===
 array(1) {
   [0]=>
@@ -192,7 +189,7 @@ array(1) {
 ][fn_1st]
 [Test::me_2nd]
 elog_file: %s/056.php
-elog_line: 44
+elog_line: 41
 === dump ===
 object(stdClass)#%d (0) {
 }
@@ -201,7 +198,7 @@ stdClass {
 }[fn_1st]
 [Test::me_2nd]
 elog_file: %s/056.php
-elog_line: 44
+elog_line: 41
 
 [ Test 4 ]
 === elog_get_filter: execute ===
@@ -237,7 +234,7 @@ dummy[fn_1st]
 [Test::st_me_3rd]
 [Test::me_2nd]
 elog_file: %s/056.php
-elog_line: 44[closure_4th]
+elog_line: 41[closure_4th]
 
 === dump ===
 array(1) {
@@ -251,7 +248,7 @@ array(1) {
 [Test::st_me_3rd]
 [Test::me_2nd]
 elog_file: %s/056.php
-elog_line: 44[closure_4th]
+elog_line: 41[closure_4th]
 
 === dump ===
 object(stdClass)#%d (0) {
@@ -262,4 +259,4 @@ stdClass {
 [Test::st_me_3rd]
 [Test::me_2nd]
 elog_file: %s/056.php
-elog_line: 44[closure_4th]
+elog_line: 41[closure_4th]

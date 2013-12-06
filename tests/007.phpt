@@ -7,10 +7,6 @@ elog udp: type=11,host=127.0.0.1
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
-
 $log = dirname(__FILE__) . "/tmp_007.log";
 $host = "udp://127.0.0.1:12342";
 

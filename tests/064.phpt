@@ -13,9 +13,6 @@ elog.called_origin_error_handler=Off
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log_1 = dirname(__FILE__) . "/tmp_064_0.log";
 $log_2 = dirname(__FILE__) . "/tmp_064_1.log";

@@ -7,9 +7,6 @@ date.timezone=Asia/Tokyo
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_076.log";
 ini_set('elog.default_type', 3);
@@ -82,10 +79,10 @@ elog.filter_label_level --> elog_level
 elog.filter_label_request --> elog_request
 
 [ default ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {
@@ -93,10 +90,10 @@ elog_request: {
 }
 
 [ elog.filter_label_scalar: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {
@@ -104,10 +101,10 @@ elog_request: {
 }
 
 [ elog.filter_label_file: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {
@@ -115,10 +112,10 @@ elog_request: {
 }
 
 [ elog.filter_label_line: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {
@@ -126,10 +123,10 @@ elog_request: {
 }
 
 [ elog.filter_label_timestamp: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {
@@ -137,10 +134,10 @@ elog_request: {
 }
 
 [ elog.filter_label_level: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {
@@ -148,10 +145,10 @@ elog_request: {
 }
 
 [ elog.filter_label_request: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":21,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
+{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
 ["dummy"]
 elog_file: %s/076.php
-elog_line: 24
+elog_line: 21
 elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
 elog_level: ERR
 elog_request: {

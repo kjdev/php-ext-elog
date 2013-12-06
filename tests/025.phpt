@@ -6,9 +6,6 @@ elog_register_filter
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 echo "=== Filter default ===\n";
 var_dump(elog_get_filter());

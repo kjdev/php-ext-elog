@@ -6,9 +6,6 @@ elog_prepend_filter: invalid arguments
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 var_dump(elog_prepend_filter("hoge"));
 var_dump(elog_prepend_filter(""));

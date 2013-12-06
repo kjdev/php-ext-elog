@@ -3,9 +3,6 @@ phpinfo() displays elog info
 --SKIPIF--
 --FILE--
 <?php
-if (!extension_loaded('elog')) {
-    dl('callmap.' . PHP_SHLIB_SUFFIX);
-}
 
 phpinfo();
 ?>

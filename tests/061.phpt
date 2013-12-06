@@ -6,9 +6,6 @@ multi type elog with filter
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 
 $log_1 = dirname(__FILE__) . "/tmp_061_1.log";
@@ -86,12 +83,12 @@ array(0) {
 === file 1: fileline ===
 dummy
 elog_file: %s/061.php
-elog_line: 36
+elog_line: 33
 === file 2: json ===
 {"message":"dummy\n"}
 === %s/test.sh: json, fileline ===
 hoge foo
-{"message":"dummy\n","elog_file":"%s/061.php","elog_line":36}
+{"message":"dummy\n","elog_file":"%s/061.php","elog_line":33}
 
 
 [ Test 2 ]
@@ -116,12 +113,12 @@ array(1) {
 dummy
 [fn_1st]
 elog_file: %s/061.php
-elog_line: 36
+elog_line: 33
 === file 2: json ===
 {"message":"dummy\n[fn_1st]\n"}
 === %s/test.sh: json, fileline ===
 hoge foo
-{"message":"dummy\n[fn_1st]\n","elog_file":"%s/061.php","elog_line":36}
+{"message":"dummy\n[fn_1st]\n","elog_file":"%s/061.php","elog_line":33}
 
 
 [ Test 2 ]
@@ -150,11 +147,11 @@ array(2) {
 dummy
 [fn_1st]
 elog_file: %s/061.php
-elog_line: 36[fn_2nd]
+elog_line: 33[fn_2nd]
 
 === file 2: json ===
 {"message":"dummy\n[fn_1st]\n"}[fn_2nd]
 
 === %s/test.sh: json, fileline ===
 hoge foo
-{"message":"dummy\n[fn_1st]\n","elog_file":"%s/061.php","elog_line":36}[fn_2nd]
+{"message":"dummy\n[fn_1st]\n","elog_file":"%s/061.php","elog_line":33}[fn_2nd]

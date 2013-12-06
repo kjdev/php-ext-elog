@@ -6,10 +6,6 @@ elog command: type=10
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
-
 $log = dirname(__FILE__) . "/test.log";
 $command = dirname(__FILE__) . "/test.sh";
 

@@ -7,10 +7,6 @@ elog http: type=11,host=127.0.0.1,options=HEADER
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
-
 $log = dirname(__FILE__) . "/tmp_009.log";
 $host = "http://127.0.0.1:12342";
 

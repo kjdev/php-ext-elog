@@ -7,9 +7,6 @@ date.timezone=Asia/Tokyo
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_055.log";
 ini_set('elog.default_type', 3);
@@ -130,14 +127,14 @@ string(5) "dummy"
 dummy[fn_1st]
 [Test::me_2nd]
 elog_file: %s/055.php
-elog_line: 57[Test::st_me_3rd]
+elog_line: 54[Test::st_me_3rd]
 [closure_4th]
 
 === err ===
 dummy[fn_1st]
 [Test::me_2nd]
 elog_file: %s/055.php
-elog_line: 62[Test::st_me_3rd]
+elog_line: 59[Test::st_me_3rd]
 [closure_4th]
 
 
@@ -152,7 +149,7 @@ array(1) {
 ][fn_1st]
 [Test::me_2nd]
 elog_file: %s/055.php
-elog_line: 57[Test::st_me_3rd]
+elog_line: 54[Test::st_me_3rd]
 [closure_4th]
 
 === err ===
@@ -161,7 +158,7 @@ elog_line: 57[Test::st_me_3rd]
 ][fn_1st]
 [Test::me_2nd]
 elog_file: %s/055.php
-elog_line: 62[Test::st_me_3rd]
+elog_line: 59[Test::st_me_3rd]
 [closure_4th]
 
 
@@ -173,7 +170,7 @@ stdClass {
 }[fn_1st]
 [Test::me_2nd]
 elog_file: %s/055.php
-elog_line: 57[Test::st_me_3rd]
+elog_line: 54[Test::st_me_3rd]
 [closure_4th]
 
 === err ===
@@ -181,5 +178,5 @@ stdClass {
 }[fn_1st]
 [Test::me_2nd]
 elog_file: %s/055.php
-elog_line: 62[Test::st_me_3rd]
+elog_line: 59[Test::st_me_3rd]
 [closure_4th]

@@ -12,9 +12,6 @@ elog.override_error_handler=On
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log_1 = dirname(__FILE__) . "/tmp_063_0.log";
 $log_2 = dirname(__FILE__) . "/tmp_063_1.log";
@@ -49,24 +46,24 @@ test($log_1, $log_2);
 
 ?>
 --EXPECTF--
-Notice: Undefined variable: aa in %s/063.php on line 12
+Notice: Undefined variable: aa in %s/063.php on line 9
 === error_log ===
-[%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 12
+[%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 9
 
 === elog ===
-PHP Notice:  Undefined variable: aa in %s/063.php on line 12
+PHP Notice:  Undefined variable: aa in %s/063.php on line 9
 [ append: elog_filter_add_fileline ]
 array(0) {
 }
 
-Notice: Undefined variable: aa in %s/063.php on line 12
+Notice: Undefined variable: aa in %s/063.php on line 9
 === error_log ===
-[%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 12
+[%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 9
 
 === elog ===
-PHP Notice:  Undefined variable: aa in %s/063.php on line 12
+PHP Notice:  Undefined variable: aa in %s/063.php on line 9
 elog_file: %s/063.php
-elog_line: 12
+elog_line: 9
 [ append: elog_filter_to_json ]
 [ execute: elog_filter_add_fileline ]
 array(2) {
@@ -76,9 +73,9 @@ array(2) {
   string(24) "elog_filter_add_fileline"
 }
 
-Notice: Undefined variable: aa in %s/063.php on line 12
+Notice: Undefined variable: aa in %s/063.php on line 9
 === error_log ===
-[%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 12
+[%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 9
 
 === elog ===
-{"message":"PHP Notice:  Undefined variable: aa in %s/063.php on line 12","elog_file":"%s/063.php","elog_line":12}
+{"message":"PHP Notice:  Undefined variable: aa in %s/063.php on line 9","elog_file":"%s/063.php","elog_line":9}

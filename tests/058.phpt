@@ -7,9 +7,6 @@ elog.filter_execute="elog_filter_add_fileline,fn_1st,2nd"
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
 
 $log = dirname(__FILE__) . "/tmp_058.log";
 ini_set('elog.default_type', 3);
@@ -64,7 +61,7 @@ elog_filter_add_fileline,fn_1st,2nd
 === output ===
 dummy
 elog_file: %s/058.php
-elog_line: 26[fn_1st]
+elog_line: 23[fn_1st]
 
 
 [ Test 2 ]
@@ -84,7 +81,7 @@ elog_filter_add_fileline,fn_1st,2nd
 === output ===
 dummy
 elog_file: %s/058.php
-elog_line: 26[fn_2nd]
+elog_line: 23[fn_2nd]
 
 
 [ Test 2 ]
@@ -104,5 +101,5 @@ elog_filter_add_fileline,fn_1st,2nd
 === output ===
 dummy
 elog_file: %s/058.php
-elog_line: 26[fn_2nd]
+elog_line: 23[fn_2nd]
 [fn_2nd]

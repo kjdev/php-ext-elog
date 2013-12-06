@@ -10,10 +10,6 @@ elog.default_destination=tests/tmp_012_0.log
 <?php
 require 'test.inc';
 
-if (!extension_loaded('elog')) {
-    dl('elog.' . PHP_SHLIB_SUFFIX);
-}
-
 $log_0 = dirname(__FILE__) . "/tmp_012_0.log";
 $log_1 = dirname(__FILE__) . "/tmp_012_1.log";
 $log_2 = dirname(__FILE__) . "/tmp_012_2.log";
