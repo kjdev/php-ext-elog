@@ -54,5 +54,6 @@ ZEND_FUNCTION(elog_filter_add_fileline);
 ZEND_FUNCTION(elog_filter_add_timestamp);
 ZEND_FUNCTION(elog_filter_add_request);
 ZEND_FUNCTION(elog_filter_add_level);
+ZEND_FUNCTION(elog_filter_add_trace);
 
 #endif

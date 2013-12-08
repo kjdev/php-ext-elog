@@ -1,8 +1,6 @@
-
 # elog function Extension for PHP
 
 [![Build Status](https://travis-ci.org/kjdev/php-ext-elog.png?branch=master)](https://travis-ci.org/kjdev/php-ext-elog)
-[![Coverage Status](https://coveralls.io/repos/kjdev/php-ext-elog/badge.png)](https://coveralls.io/r/kjdev/php-ext-elog)
 
 This extension allows elog function.
 
@@ -192,6 +190,12 @@ Set the field name in the elog\_filter\_add\_request().
 
 The default value is "elog\_request".
 
+## elog.filter\_label\_trace _string_
+
+Set the field name in the elog\_filter\_add\_trace().
+
+The default value is "elog\_trace".
+
 ## elog.override\_error\_log _boolean_
 
 If On, error\_log() override to elog().
@@ -253,6 +257,7 @@ builtin filter function:
 * elog\_filter\_add\_timestamp — add the execution time
 * elog\_filter\_add\_request — add a variable REQUEST
 * elog\_filter\_add\_level — add a log level
+* elog\_filter\_add\_trace — add a trace information
 
 
 ## elog — Send an error message to the defined error handling routines
@@ -670,6 +675,27 @@ Add a log level.
 Returns a value on success or FALSE on failure.
 
 If the scalar value of no-string, Add to log level after converted to a string.
+
+## elog\_filter\_add\_trace — add a trace information
+
+### Description
+
+mixed **elog\_filter\_add\_trace** ( mixed _$value_ )
+
+Add a trace information.
+
+### Parameters
+
+* _value_
+
+  The value.
+
+### Return Values
+
+Returns a value on success or FALSE on failure.
+
+If the scalar value of no-string, Add to trace information after converted to a
+string.
 
 
 # Examples
@@ -1139,5 +1165,4 @@ POST method, Media type is application/x-www-form-urlencoded.
 
 # Related
 
-* [code coverage report](https://coveralls.io/r/kjdev/php-ext-elog)
 * [api document](http://api.at-ninja.jp/php-ext-elog/)

@@ -218,6 +218,10 @@ elog_output(int type, char *message, int message_len,
     php_stream *stream = NULL;
 
     switch (type) {
+        case -1:
+            /* standard output */
+            php_printf("%s\n", message);
+            break;
         case 1:
             /* origin: send an email */
             if (!php_mail(destination, "PHP error_log message",
@@ -575,7 +579,7 @@ ZEND_FUNCTION(elog ## _name)                                              \
     int destination_len = 0, options_len = 0;                             \
     int type = 0, argc = ZEND_NUM_ARGS();                                 \
     zval *arg_type = NULL, *level, *retval, **message;                    \
-    zend_bool is_filter = 0;                                              \
+    zend_bool is_filter = 0, is_multi = 0;                                \
     if (ELOG_G(level) < _level) {                                         \
         RETURN_TRUE;                                                      \
     }                                                                     \
@@ -597,7 +601,7 @@ ZEND_FUNCTION(elog ## _name)                                              \
     }                                                                     \
     if (argc > 1) {                                                       \
         if (Z_TYPE_P(arg_type) == IS_ARRAY) {                             \
-            type = -1;                                                    \
+            is_multi = 1;                                                 \
         } else {                                                          \
             convert_to_long(arg_type);                                    \
             type = Z_LVAL_P(arg_type);                                    \
@@ -606,7 +610,7 @@ ZEND_FUNCTION(elog ## _name)                                              \
     if (!arg_type && ELOG_G(type) > 0) {                                  \
         type = ELOG_G(type);                                              \
     }                                                                     \
-    if (type >= 0) {                                                      \
+    if (is_multi == 0) {                                                  \
         if (ELOG_G(exec_filter) && strlen(ELOG_G(exec_filter)) > 0) {     \
             if (!is_filter) {                                             \
                 Z_ADDREF_PP(message);                                     \
@@ -734,6 +738,9 @@ ZEND_INI_BEGIN()
                        zend_elog_globals, elog_globals)
     STD_ZEND_INI_ENTRY("elog.filter_label_request", EL_LABEL_REQUEST,
                        ZEND_INI_ALL, OnUpdateString, label_request,
+                       zend_elog_globals, elog_globals)
+    STD_ZEND_INI_ENTRY("elog.filter_label_trace", EL_LABEL_TRACE,
+                       ZEND_INI_ALL, OnUpdateString, label_trace,
                        zend_elog_globals, elog_globals)
     /* INI_SYSTEM */
     STD_ZEND_INI_BOOLEAN("elog.override_error_log", "Off",
@@ -976,6 +983,7 @@ elog_init_globals(zend_elog_globals *elog_globals)
     elog_globals->label_timestamp = NULL;
     elog_globals->label_level = NULL;
     elog_globals->label_request = NULL;
+    elog_globals->label_trace = NULL;
 
     elog_globals->error_log = 0;
     elog_globals->error_handler = 0;
@@ -1116,6 +1124,7 @@ static zend_function_entry elog_functions[] = {
     ZEND_FE(elog_filter_add_timestamp, arginfo_elog_filter_function)
     ZEND_FE(elog_filter_add_request, arginfo_elog_filter_function)
     ZEND_FE(elog_filter_add_level, arginfo_elog_filter_function)
+    ZEND_FE(elog_filter_add_trace, arginfo_elog_filter_function)
     ZEND_FE_END
 };
 

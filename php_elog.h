@@ -3,7 +3,7 @@
 #define PHP_ELOG_H
 
 #define ELOG_NAMESPACE "elog"
-#define ELOG_EXT_VERSION "0.1.1"
+#define ELOG_EXT_VERSION "0.1.2"
 
 #define EL_FILTER_APPEND  1
 #define EL_FILTER_PREPEND 2
@@ -25,6 +25,7 @@
 #define EL_LABEL_TIMESTAMP "elog_time"
 #define EL_LABEL_LEVEL     "elog_level"
 #define EL_LABEL_REQUEST   "elog_request"
+#define EL_LABEL_TRACE     "elog_trace"
 
 extern zend_module_entry elog_module_entry;
 #define phpext_elog_ptr &elog_module_entry
@@ -60,6 +61,7 @@ ZEND_BEGIN_MODULE_GLOBALS(elog)
     char *label_timestamp;
     char *label_level;
     char *label_request;
+    char *label_trace;
     zend_bool error_log;
     zend_bool error_handler;
     zend_bool error_handler_origin;

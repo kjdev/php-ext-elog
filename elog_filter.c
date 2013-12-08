@@ -1,4 +1,3 @@
-
 #ifdef HAVE_CONFIG_H
 #    include "config.h"
 #endif
@@ -1240,42 +1239,50 @@ ZEND_FUNCTION(elog_filter_to_http_query)
 
 #define ELOG_JSON_SET(_key, _val) json_object_set_new(json, _key, _val)
 
-#define ELOG_JSON_RETVAL()                   \
-    if (ELOG_G(json_unicode_escape)) {       \
-        json_flags |= JSON_ENSURE_ASCII;     \
-    }                                        \
-    json_str = json_dumps(json, json_flags); \
-    if (json_str) {                          \
-        RETVAL_STRING(json_str, 1);          \
-        free(json_str);                      \
-    }
+#define ELOG_JSON_RETVAL()                       \
+    do {                                         \
+        if (ELOG_G(json_unicode_escape)) {       \
+            json_flags |= JSON_ENSURE_ASCII;     \
+        }                                        \
+        json_str = json_dumps(json, json_flags); \
+        if (json_str) {                          \
+            RETVAL_STRING(json_str, 1);          \
+            free(json_str);                      \
+        }                                        \
+    } while(0)
 
-#define ELOG_HASH_ADD_STRINGL(_ht, _key, _str, _len, _duplicate)     \
-    zval *zv;                                                        \
-    MAKE_STD_ZVAL(zv);                                               \
-    ZVAL_STRINGL(zv, _str, _len, _duplicate);                        \
-    if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
-                      (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
-        zval_ptr_dtor(&zv);                                          \
-    }
+#define ELOG_HASH_ADD_STRINGL(_ht, _key, _str, _len, _duplicate)         \
+    do {                                                                 \
+        zval *zv;                                                        \
+        MAKE_STD_ZVAL(zv);                                               \
+        ZVAL_STRINGL(zv, _str, _len, _duplicate);                        \
+        if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
+                          (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
+            zval_ptr_dtor(&zv);                                          \
+        }                                                                \
+    } while(0)
 
-#define ELOG_HASH_ADD_LONG(_ht, _key, _val)                          \
-    zval *zv;                                                        \
-    MAKE_STD_ZVAL(zv);                                               \
-    ZVAL_LONG(zv, _val);                                             \
-    if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
-                      (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
-        zval_ptr_dtor(&zv);                                          \
-    }
+#define ELOG_HASH_ADD_LONG(_ht, _key, _val)                              \
+   do {                                                                  \
+       zval *zv;                                                         \
+        MAKE_STD_ZVAL(zv);                                               \
+        ZVAL_LONG(zv, _val);                                             \
+        if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
+                          (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
+            zval_ptr_dtor(&zv);                                          \
+        }                                                                \
+    } while(0)
 
-#define ELOG_HASH_ADD_NULL(_ht, _key)                                \
-    zval *zv;                                                        \
-    MAKE_STD_ZVAL(zv);                                               \
-    ZVAL_NULL(zv);                                                   \
-    if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
-                      (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
-        zval_ptr_dtor(&zv);                                          \
-    }
+#define ELOG_HASH_ADD_NULL(_ht, _key)                                    \
+    do {                                                                 \
+        zval *zv;                                                        \
+        MAKE_STD_ZVAL(zv);                                               \
+        ZVAL_NULL(zv);                                                   \
+        if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
+                          (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
+            zval_ptr_dtor(&zv);                                          \
+        }                                                                \
+    } while(0)
 
 #define ELOG_HASH_ADD_ZVAL(_ht, _key, _val) \
     zend_hash_add(_ht, _key, strlen(_key)+1, (void *)_val, sizeof(zval), NULL)
@@ -1655,4 +1662,226 @@ ZEND_FUNCTION(elog_filter_add_level)
 
         smart_str_free(&buf);
     }
+}
+
+ZEND_FUNCTION(elog_filter_add_trace)
+{
+    zval *msg;
+    long level = EL_LEVEL_ALL;
+    char *label_trace;
+    HashTable *ht_retval = NULL;
+    zend_execute_data *ptr, *skip;
+    int lineno, frameno = 0;
+    const char *function_name;
+    const char *filename;
+    const char *class_name = NULL;
+    char *call_type;
+    const char *include_filename = NULL;
+    int indent = 0;
+    long options = 0;
+    long limit = 0;
+    zval *val;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+                              "z|l", &msg, &level) == FAILURE) {
+        return;
+    }
+
+    label_trace = ELOG_G(label_trace);
+    if (!label_trace || strlen(label_trace) <= 0) {
+        label_trace = EL_LABEL_TRACE;
+    }
+
+    if (Z_TYPE_P(msg) == IS_ARRAY) {
+        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
+        ht_retval = Z_ARRVAL_P(return_value);
+    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
+        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
+        ht_retval = Z_OBJPROP_P(return_value);
+    }
+
+    MAKE_STD_ZVAL(val);
+    array_init(val);
+
+    ptr = EG(current_execute_data);
+    ptr = ptr->prev_execute_data; /* skip elog function */
+
+    while (ptr && (limit == 0 || frameno < limit)) {
+        const char *free_class_name = NULL;
+        smart_str trace = {0};
+
+        frameno++;
+        class_name = call_type = NULL;
+
+        skip = ptr; /* skip internal handler */
+        if (!skip->op_array &&
+            skip->prev_execute_data &&
+            skip->prev_execute_data->opline &&
+            skip->prev_execute_data->opline->opcode != ZEND_DO_FCALL &&
+            skip->prev_execute_data->opline->opcode != ZEND_DO_FCALL_BY_NAME &&
+            skip->prev_execute_data->opline->opcode != ZEND_INCLUDE_OR_EVAL) {
+            skip = skip->prev_execute_data;
+        }
+
+        if (skip->op_array) {
+            filename = skip->op_array->filename;
+            lineno = skip->opline->lineno;
+        } else {
+            filename = NULL;
+            lineno = 0;
+        }
+
+        function_name =
+            (ptr->function_state.function->common.scope &&
+             ptr->function_state.function->common.scope->trait_aliases) ?
+            zend_resolve_method_name(
+                ptr->object ?
+                Z_OBJCE_P(ptr->object) :
+                ptr->function_state.function->common.scope,
+                ptr->function_state.function) :
+            ptr->function_state.function->common.function_name;
+
+        if (function_name) {
+            if (ptr->object) {
+                if (ptr->function_state.function->common.scope) {
+                    class_name =
+                        ptr->function_state.function->common.scope->name;
+                } else {
+                    zend_uint class_name_len;
+                    int dup;
+                    dup = zend_get_object_classname(ptr->object, &class_name,
+                                                    &class_name_len TSRMLS_CC);
+                    if(!dup) {
+                        free_class_name = class_name;
+                    }
+                }
+                call_type = "->";
+            } else if (ptr->function_state.function->common.scope) {
+                class_name = ptr->function_state.function->common.scope->name;
+                call_type = "::";
+            } else {
+                class_name = NULL;
+                call_type = NULL;
+            }
+        } else {
+            zend_bool build_filename_arg = 1;
+            if (!ptr->opline || ptr->opline->opcode != ZEND_INCLUDE_OR_EVAL) {
+                function_name = "unknown";
+                build_filename_arg = 0;
+            } else {
+                switch (ptr->opline->extended_value) {
+                    case ZEND_EVAL:
+                        function_name = "eval";
+                        build_filename_arg = 0;
+                        break;
+                    case ZEND_INCLUDE:
+                        function_name = "include";
+                        break;
+                    case ZEND_REQUIRE:
+                        function_name = "require";
+                        break;
+                    case ZEND_INCLUDE_ONCE:
+                        function_name = "include_once";
+                        break;
+                    case ZEND_REQUIRE_ONCE:
+                        function_name = "require_once";
+                        break;
+                    default:
+                        function_name = "unknown";
+                        build_filename_arg = 0;
+                        break;
+                }
+            }
+            call_type = NULL;
+        }
+        smart_str_appendc(&trace, '#');
+        smart_str_append_long(&trace, indent);
+        smart_str_appendc(&trace, ' ');
+        if (class_name) {
+            smart_str_appendl(&trace, class_name, strlen(class_name));
+            smart_str_appendl(&trace, call_type, strlen(call_type));
+        }
+        smart_str_appendl(&trace, function_name, strlen(function_name));
+        smart_str_appendc(&trace, '(');
+        if (filename) {
+            smart_str_appendl(&trace, ") called at [", 13);
+            smart_str_appendl(&trace, filename, strlen(filename));
+            smart_str_appendc(&trace, ':');
+            smart_str_append_long(&trace, lineno);
+            smart_str_appendc(&trace, ']');
+        } else {
+            zend_execute_data *prev = skip->prev_execute_data;
+            while (prev) {
+                if (prev->function_state.function &&
+                    prev->function_state.function->common.type
+                    != ZEND_USER_FUNCTION) {
+                    prev = NULL;
+                    break;
+                }
+                if (prev->op_array) {
+                    smart_str_appendl(&trace, ") called at [", 13);
+                    smart_str_appendl(&trace, prev->op_array->filename,
+                                      strlen(prev->op_array->filename));
+                    smart_str_appendc(&trace, ':');
+                    smart_str_append_long(&trace, prev->opline->lineno);
+                    smart_str_appendc(&trace, ']');
+                    break;
+                }
+                prev = prev->prev_execute_data;
+            }
+            if (!prev) {
+                smart_str_appendc(&trace, ')');
+            }
+        }
+
+        smart_str_0(&trace);
+
+        add_next_index_stringl(val, trace.c, trace.len, 1);
+
+        smart_str_free(&trace);
+
+        include_filename = filename;
+        ptr = skip->prev_execute_data;
+        ++indent;
+        if (free_class_name) {
+            efree((char*)free_class_name);
+        }
+    }
+
+    if (ht_retval) {
+        Z_ADDREF_P(val);
+        ELOG_HASH_ADD_ZVAL(ht_retval, label_trace, &val);
+    } else {
+        smart_str buf = {0};
+
+        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
+
+        ELOG_BEGIN_IS_JSON_STRING(buf);
+        json_t *element = json_array();
+        if (element) {
+            if (elog_var_json(&val, element, ELOG_TYPE_ARRAY TSRMLS_CC) == 0) {
+                json_object_set_new(json, label_trace, element);
+            } else {
+                json_delete(element);
+            }
+        }
+        ELOG_JSON_RETVAL();
+        zval_ptr_dtor(&val);
+        ELOG_END_IS_JSON_STRING(1);
+
+        ELOG_ADD_EOL(buf);
+
+        smart_str_appendl(&buf, label_trace, strlen(label_trace));
+        smart_str_appendl(&buf, ": ", 2);
+
+        elog_var_dump(&val, 1, &buf, ELOG_MODE_DUMP TSRMLS_CC);
+
+        smart_str_0(&buf);
+
+        RETVAL_STRINGL(buf.c, buf.len, 1);
+
+        smart_str_free(&buf);
+    }
+
+    zval_ptr_dtor(&val);
 }
