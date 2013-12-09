@@ -83,7 +83,7 @@ bool(true)
   0: "message"
   "elog_file": "%s/079.php"
   "elog_line": 47
-  "TRACE": [
+  "trace": [
     "#0 elog() called at [%s/079.php:47]"
   ]
 }
@@ -96,7 +96,7 @@ bool(true)
   "elog_level": "INFO"
   "elog_file": "%s/079.php"
   "elog_line": 30
-  "TRACE": [
+  "trace": [
     "#0 elog_info() called at [%s/079.php:30]"
     "#1 test1() called at [%s/079.php:54]"
   ]
@@ -110,7 +110,7 @@ bool(true)
   "elog_level": "ERR"
   "elog_file": "%s/079.php"
   "elog_line": 38
-  "TRACE": [
+  "trace": [
     "#0 elog_err() called at [%s/079.php:38]"
     "#1 test2() called at [%s/079.php:57]"
   ]
@@ -120,7 +120,7 @@ bool(true)
   "elog_level": "INFO"
   "elog_file": "%s/079.php"
   "elog_line": 30
-  "TRACE": [
+  "trace": [
     "#0 elog_info() called at [%s/079.php:30]"
     "#1 test1() called at [%s/079.php:39]"
     "#2 test2() called at [%s/079.php:57]"
