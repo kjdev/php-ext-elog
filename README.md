@@ -237,6 +237,7 @@ The default value is "Off".
 * elog\_notice — elog: normal but significant condition
 * elog\_info — elog: informational
 * elog\_debug — elog: debug-level messages
+* elog\_shutdown\_execute — function for execution on shutdown
 
 filter function:
 
@@ -377,6 +378,35 @@ bool **elog\_debug** ( string _$message_ [, int _$type_ = 0 [, string _$destinat
 elog function of log level debug.
 
 parameters and return values ​​the same and elog.
+
+## elog\_shutdown\_execute — function for execution on shutdown
+
+### Description
+
+int **elog\_shutdown\_execute** ( [, int _$type_ = 0 [, string _$destination_ [, string _$options_ ]]] )
+
+elog function for execution on shutdown.
+
+### Parameters
+
+* _type_
+
+  Says where the error should go.
+
+* _destination_
+
+  The destination.
+  Its meaning depends on the type parameter as described above.
+
+* _options_
+
+  The options.
+  Its meaning depends on the type parameter as described above.
+
+
+### Return Values
+
+Returns TRUE on success or FALSE on failure.
 
 
 ## elog\_register\_filter — Register a user defined elog filter

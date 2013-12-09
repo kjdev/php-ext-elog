@@ -7,7 +7,7 @@ elog_filter_add_trace: add_level and add_fileline
 require 'test.inc';
 
 
-$log = dirname(__FILE__) . "/tmp_078.log";
+$log = dirname(__FILE__) . "/tmp_079.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 

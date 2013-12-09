@@ -29,6 +29,12 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_elog, 0, 0, 1)
     ZEND_ARG_INFO(0, options)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_elog_shutdown_execute, 0, 0, 1)
+    ZEND_ARG_INFO(0, type)
+    ZEND_ARG_INFO(0, destination)
+    ZEND_ARG_INFO(0, options)
+ZEND_END_ARG_INFO()
+
 #define elog_err(_flag,...) php_error_docref(NULL TSRMLS_CC, _flag, __VA_ARGS__)
 
 typedef struct elog_spawn
@@ -169,10 +175,10 @@ elog_spawn_actions(elog_spawn_t *self TSRMLS_DC)
 }
 
 static int
-elog_spawn_run(elog_spawn_t *self, char *message, int message_len TSRMLS_DC)
+elog_spawn_run(elog_spawn_t *self, zval *message TSRMLS_DC)
 {
     pid_t pid;
-    int ret, write_len;
+    int ret, write_len = 0;
 
     if (posix_spawnp(&pid, self->args[0], &self->actions,
                      NULL, self->args, NULL) != 0) {
@@ -190,7 +196,20 @@ elog_spawn_run(elog_spawn_t *self, char *message, int message_len TSRMLS_DC)
         self->out[1] = -1;
     }
 
-    write_len = write(self->in[1], message, message_len);
+    if (Z_TYPE_P(message) == IS_ARRAY) {
+        zval **data;
+        HashPosition pos;
+        zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+        while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                             (void **)&data,
+                                             &pos) == SUCCESS) {
+            write_len += write(self->in[1],
+                               Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+            zend_hash_move_forward_ex(HASH_OF(message), &pos);
+        }
+    } else {
+        write_len = write(self->in[1], Z_STRVAL_P(message), Z_STRLEN_P(message));
+    }
     close(self->in[1]);
     self->in[1] = -1;
 
@@ -212,21 +231,90 @@ elog_spawn_run(elog_spawn_t *self, char *message, int message_len TSRMLS_DC)
 #define ELOG_HTTP_HEADER "Content-Type: application/x-www-form-urlencoded"
 
 static int
-elog_output(int type, char *message, int message_len,
-            char *destination, char *options TSRMLS_DC)
+elog_output_shutdown(int type, zval *message,
+                     char *destination, char *options TSRMLS_DC)
+{
+    if (!ELOG_G(shutdown).enable) {
+        return FAILURE;
+    }
+
+    if (type != ELOG_G(shutdown).type) {
+        return FAILURE;
+    }
+
+    if (ELOG_G(shutdown).destination) {
+        if (!destination ||
+            strcmp(ELOG_G(shutdown).destination, destination) != 0) {
+            return FAILURE;
+        }
+    } else if (destination) {
+        return FAILURE;
+    }
+
+    if (ELOG_G(shutdown).options) {
+        if (!options ||
+            strcmp(ELOG_G(shutdown).options, options) != 0) {
+            return FAILURE;
+        }
+    } else if (options) {
+        return FAILURE;
+    }
+
+    if (add_next_index_stringl(ELOG_G(shutdown).messages,
+                               Z_STRVAL_P(message),
+                               Z_STRLEN_P(message), 1) != SUCCESS) {
+        return FAILURE;
+    }
+
+    return SUCCESS;
+}
+
+static int
+elog_output(int type, zval *message, char *destination, char *options TSRMLS_DC)
 {
     php_stream *stream = NULL;
+    zval **data;
+    HashPosition pos;
 
     switch (type) {
         case -1:
             /* standard output */
-            php_printf("%s\n", message);
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
+            if (Z_TYPE_P(message) == IS_ARRAY) {
+                zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                     (void **)&data,
+                                                     &pos) == SUCCESS) {
+                    php_printf("%s", Z_STRVAL_PP(data));
+                    zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                }
+            } else {
+                php_printf("%s", Z_STRVAL_P(message));
+            }
             break;
         case 1:
             /* origin: send an email */
-            if (!php_mail(destination, "PHP error_log message",
-                          message, options, NULL TSRMLS_CC)) {
-                return FAILURE;
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
+            if (Z_TYPE_P(message) == IS_ARRAY) {
+                zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                     (void **)&data,
+                                                     &pos) == SUCCESS) {
+                    php_mail(destination, "PHP error_log message",
+                             Z_STRVAL_PP(data), options, NULL TSRMLS_CC);
+                    zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                }
+            } else {
+                if (!php_mail(destination, "PHP error_log message",
+                              Z_STRVAL_P(message), options, NULL TSRMLS_CC)) {
+                    return FAILURE;
+                }
             }
             break;
         case 2:
@@ -236,19 +324,49 @@ elog_output(int type, char *message, int message_len,
             return FAILURE;
         case 3:
             /* origin: save to a file */
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
             stream = php_stream_open_wrapper(destination, "a",
                                              IGNORE_URL_WIN | REPORT_ERRORS,
                                              NULL);
             if (!stream) {
                 return FAILURE;
             }
-            php_stream_write(stream, message, message_len);
+            if (Z_TYPE_P(message) == IS_ARRAY) {
+                zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                     (void **)&data,
+                                                     &pos) == SUCCESS) {
+                    php_stream_write(stream,
+                                     Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+                    zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                }
+            } else {
+                php_stream_write(stream,
+                                 Z_STRVAL_P(message), Z_STRLEN_P(message));
+            }
             php_stream_close(stream);
             break;
         case 4:
             /* origin: send to SAPI */
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
             if (sapi_module.log_message) {
-                sapi_module.log_message(message TSRMLS_CC);
+                if (Z_TYPE_P(message) == IS_ARRAY) {
+                    zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                    while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                         (void **)&data,
+                                                         &pos) == SUCCESS) {
+                        sapi_module.log_message(Z_STRVAL_PP(data) TSRMLS_CC);
+                        zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                    }
+                } else {
+                    sapi_module.log_message(Z_STRVAL_P(message) TSRMLS_CC);
+                }
             } else {
                 return FAILURE;
             }
@@ -256,6 +374,11 @@ elog_output(int type, char *message, int message_len,
         case 10: {
             /* spawn: send to command */
             elog_spawn_t espawn;
+
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
 
             if (!destination || strlen(destination) == 0) {
                 elog_err(E_WARNING, "Command cannot be empty");
@@ -267,20 +390,16 @@ elog_output(int type, char *message, int message_len,
             if (elog_spawn_args(&espawn, destination,
                                 options TSRMLS_CC) != SUCCESS) {
                 elog_spawn_destroy(&espawn TSRMLS_CC);
-                //php_log_err(message TSRMLS_CC);
                 return FAILURE;
             }
 
             if (elog_spawn_actions(&espawn TSRMLS_CC) != SUCCESS) {
                 elog_spawn_destroy(&espawn TSRMLS_CC);
-                //php_log_err(message TSRMLS_CC);
                 return FAILURE;
             }
 
-            if (elog_spawn_run(&espawn, message,
-                               message_len TSRMLS_CC) != SUCCESS) {
+            if (elog_spawn_run(&espawn, message TSRMLS_CC) != SUCCESS) {
                 elog_spawn_destroy(&espawn TSRMLS_CC);
-                //php_log_err(message TSRMLS_CC);
                 return FAILURE;
             }
 
@@ -294,6 +413,11 @@ elog_output(int type, char *message, int message_len,
             char *errstr = NULL;
             struct timeval timeout = { FG(default_socket_timeout), 0 };
 
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
+
             if (!destination || strlen(destination) == 0) {
                 elog_err(E_WARNING, "Address cannot be empty");
                 return FAILURE;
@@ -304,65 +428,153 @@ elog_output(int type, char *message, int message_len,
                 php_stream_context *context;
                 zval method, content, header;
 
-                context = php_stream_context_alloc(TSRMLS_C);
-                if (!context) {
-                    return FAILURE;
-                }
+                if (Z_TYPE_P(message) == IS_ARRAY) {
+                    zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                    while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                         (void **)&data,
+                                                         &pos) == SUCCESS) {
+                        context = php_stream_context_alloc(TSRMLS_C);
+                        if (!context) {
+                            continue;
+                        }
 
-                ZVAL_STRINGL(&method, "POST", sizeof("POST")-1, 0);
-                php_stream_context_set_option(context, "http",
-                                              "method", &method);
+                        ZVAL_STRINGL(&method, "POST", sizeof("POST")-1, 0);
+                        php_stream_context_set_option(context, "http",
+                                                      "method", &method);
 
-                if (options) {
-                    ZVAL_STRINGL(&header, options, strlen(options), 0);
+                        if (options) {
+                            ZVAL_STRINGL(&header, options, strlen(options), 0);
+                        } else {
+                            ZVAL_STRINGL(&header, ELOG_HTTP_HEADER,
+                                         sizeof(ELOG_HTTP_HEADER)-1, 0);
+                        }
+                        php_stream_context_set_option(context, "http",
+                                                      "header", &header);
+
+                        ZVAL_STRINGL(&content,
+                                     Z_STRVAL_PP(data), Z_STRLEN_PP(data), 0);
+
+                        php_stream_context_set_option(context, "http",
+                                                      "content", &content);
+
+                        stream = php_stream_open_wrapper_ex(destination, "r",
+                                                            0, NULL, context);
+                        if (!stream) {
+                            continue;
+                        }
+                        php_stream_close(stream);
+
+                        zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                    }
                 } else {
-                    ZVAL_STRINGL(&header, ELOG_HTTP_HEADER,
-                                 sizeof(ELOG_HTTP_HEADER)-1, 0);
-                }
-                php_stream_context_set_option(context, "http",
-                                              "header", &header);
+                    context = php_stream_context_alloc(TSRMLS_C);
+                    if (!context) {
+                        return FAILURE;
+                    }
 
-                ZVAL_STRINGL(&content, message, message_len, 0);
-                php_stream_context_set_option(context, "http",
-                                              "content", &content);
+                    ZVAL_STRINGL(&method, "POST", sizeof("POST")-1, 0);
+                    php_stream_context_set_option(context, "http",
+                                                  "method", &method);
 
-                stream = php_stream_open_wrapper_ex(destination, "r",
-                                                    0, NULL, context);
-                if (!stream) {
-                    return FAILURE;
+                    if (options) {
+                        ZVAL_STRINGL(&header, options, strlen(options), 0);
+                    } else {
+                        ZVAL_STRINGL(&header, ELOG_HTTP_HEADER,
+                                     sizeof(ELOG_HTTP_HEADER)-1, 0);
+                    }
+                    php_stream_context_set_option(context, "http",
+                                                  "header", &header);
+
+                    ZVAL_STRINGL(&content,
+                                 Z_STRVAL_P(message), Z_STRLEN_P(message), 0);
+
+                    php_stream_context_set_option(context, "http",
+                                                  "content", &content);
+
+                    stream = php_stream_open_wrapper_ex(destination, "r",
+                                                        0, NULL, context);
+                    if (!stream) {
+                        return FAILURE;
+                    }
+                    php_stream_close(stream);
                 }
-                php_stream_close(stream);
             } else {
-                stream = php_stream_xport_create(destination,
-                                                 strlen(destination),
-                                                 ENFORCE_SAFE_MODE |
-                                                 REPORT_ERRORS,
-                                                 STREAM_XPORT_CLIENT |
-                                                 STREAM_XPORT_CONNECT,
-                                                 NULL, &timeout, NULL,
-                                                 &errstr, &err);
-                if (!stream) {
+                if (Z_TYPE_P(message) == IS_ARRAY) {
+                    zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                    while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                         (void **)&data,
+                                                         &pos) == SUCCESS) {
+                        stream = php_stream_xport_create(destination,
+                                                         strlen(destination),
+                                                         ENFORCE_SAFE_MODE |
+                                                         REPORT_ERRORS,
+                                                         STREAM_XPORT_CLIENT |
+                                                         STREAM_XPORT_CONNECT,
+                                                         NULL, &timeout, NULL,
+                                                         &errstr, &err);
+                        if (!stream) {
+                            if (errstr) {
+                                efree(errstr);
+                            }
+                            continue;
+                        }
+                        if (errstr) {
+                            efree(errstr);
+                        }
+
+                        php_stream_write(stream,
+                                         Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+                        php_stream_close(stream);
+
+                        zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                    }
+                } else {
+                    stream = php_stream_xport_create(destination,
+                                                     strlen(destination),
+                                                     ENFORCE_SAFE_MODE |
+                                                     REPORT_ERRORS,
+                                                     STREAM_XPORT_CLIENT |
+                                                     STREAM_XPORT_CONNECT,
+                                                     NULL, &timeout, NULL,
+                                                     &errstr, &err);
+                    if (!stream) {
+                        if (errstr) {
+                            efree(errstr);
+                        }
+                        return FAILURE;
+                    }
                     if (errstr) {
                         efree(errstr);
                     }
-                    return FAILURE;
-                }
-                if (errstr) {
-                    efree(errstr);
-                }
 
-                /* nonblocking
-                php_stream_set_option(stream, PHP_STREAM_OPTION_BLOCKING,
-                                      0, NULL);
-                */
+                    /* nonblocking
+                    php_stream_set_option(stream, PHP_STREAM_OPTION_BLOCKING,
+                                          0, NULL);
+                    */
 
-                php_stream_write(stream, message, message_len);
-                php_stream_close(stream);
+                    php_stream_write(stream,
+                                     Z_STRVAL_P(message), Z_STRLEN_P(message));
+                    php_stream_close(stream);
+                }
             }
             break;
         }
         default:
-            php_log_err(message TSRMLS_CC);
+            if (elog_output_shutdown(type, message, destination,
+                                     options TSRMLS_CC) == SUCCESS) {
+                return SUCCESS;
+            }
+            if (Z_TYPE_P(message) == IS_ARRAY) {
+                zend_hash_internal_pointer_reset_ex(HASH_OF(message), &pos);
+                while (zend_hash_get_current_data_ex(HASH_OF(message),
+                                                     (void **)&data,
+                                                     &pos) == SUCCESS) {
+                    php_log_err(Z_STRVAL_PP(data) TSRMLS_CC);
+                    zend_hash_move_forward_ex(HASH_OF(message), &pos);
+                }
+            } else {
+                php_log_err(Z_STRVAL_P(message) TSRMLS_CC);
+            }
             break;
     }
     return SUCCESS;
@@ -558,8 +770,7 @@ elog_output_multi(zval *types, zval **message, zval *level TSRMLS_DC)
             convert_to_string(msg);
         }
 
-        elog_output(type, Z_STRVAL_P(msg), Z_STRLEN_P(msg),
-                    destination, options TSRMLS_CC);
+        elog_output(type, msg, destination, options TSRMLS_CC);
         is_error = 0;
 
         zval_ptr_dtor(&msg);
@@ -570,6 +781,59 @@ elog_output_multi(zval *types, zval **message, zval *level TSRMLS_DC)
     if (is_error) {
         elog_err(E_WARNING, "Invalid arguments");
     }
+}
+
+static void
+php_elog_shutdown_data_dtor(zval *data)
+{
+    if (data) {
+        zval_ptr_dtor(&data);
+    }
+}
+
+ZEND_FUNCTION(elog_shutdown_execute)
+{
+    char *destination = NULL, *options = NULL;
+    int destination_len = 0, options_len = 0;
+    long type = 0;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|lps",
+                              &type, &destination, &destination_len,
+                              &options, &options_len) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    if (ELOG_G(shutdown).enable) {
+        elog_err(E_WARNING, "Already shutdown flush");
+        RETURN_FALSE;
+    }
+
+    if (type == 0) {
+        type = ELOG_G(type);
+    }
+    if (destination == NULL) {
+        destination = ELOG_G(destination);
+        if (destination) {
+            destination_len = strlen(destination);
+        }
+    }
+    if (options == NULL) {
+        options = ELOG_G(options);
+        if (options) {
+            options_len = strlen(options);
+        }
+    }
+
+    ELOG_G(shutdown).enable = 1;
+    ELOG_G(shutdown).type = type;
+    if (destination_len > 0) {
+        ELOG_G(shutdown).destination = estrndup(destination, destination_len);
+    }
+    if (options_len > 0) {
+        ELOG_G(shutdown).options = estrndup(options, options_len);
+    }
+
+    RETURN_TRUE;
 }
 
 #define ELOG_FUNCTION(_name, _level)                                      \
@@ -631,7 +895,7 @@ ZEND_FUNCTION(elog ## _name)                                              \
             ELOG_G(options) && strlen(ELOG_G(options)) > 0) {             \
             options = ELOG_G(options);                                    \
         }                                                                 \
-        if (elog_output(type, Z_STRVAL_PP(message), Z_STRLEN_PP(message), \
+        if (elog_output(type, *message, \
                         destination, options TSRMLS_CC) != FAILURE) {     \
             RETVAL_TRUE;                                                  \
         }                                                                 \
@@ -843,8 +1107,7 @@ elog_message_output(int error_level, zval **message TSRMLS_DC)
     }
 
     /* output */
-    elog_output(type, Z_STRVAL_PP(message), Z_STRLEN_PP(message),
-                destination, options TSRMLS_CC);
+    elog_output(type, *message, destination, options TSRMLS_CC);
 
     /* cleanup */
     zval_ptr_dtor(&level);
@@ -991,6 +1254,7 @@ elog_init_globals(zend_elog_globals *elog_globals)
     elog_globals->exception_hook = 0;
 
     memset(&elog_globals->filter, 0, sizeof(elog_globals->filter));
+    memset(&elog_globals->shutdown, 0, sizeof(elog_globals->shutdown));
 }
 
 ZEND_MINIT_FUNCTION(elog)
@@ -1066,11 +1330,31 @@ ZEND_RINIT_FUNCTION(elog)
     zend_hash_init(ELOG_G(filter).enabled, 5, NULL,
                    (dtor_func_t)php_elog_filter_data_dtor, 0);
 
+    /* Initilize shutdown messages */
+    MAKE_STD_ZVAL(ELOG_G(shutdown).messages);
+    array_init(ELOG_G(shutdown).messages);
+
     return SUCCESS;
 }
 
 ZEND_RSHUTDOWN_FUNCTION(elog)
 {
+    /* Cleanup shutdown */
+    if (ELOG_G(shutdown).messages) {
+        ELOG_G(shutdown).enable = 0;
+        elog_output(ELOG_G(shutdown).type,
+                    ELOG_G(shutdown).messages,
+                    ELOG_G(shutdown).destination,
+                    ELOG_G(shutdown).options TSRMLS_CC);
+        zval_ptr_dtor(&(ELOG_G(shutdown).messages));
+    }
+    if (ELOG_G(shutdown).destination) {
+        efree(ELOG_G(shutdown).destination);
+    }
+    if (ELOG_G(shutdown).options) {
+        efree(ELOG_G(shutdown).options);
+    }
+
     /* Restoring error handler and throw exception hook */
     zend_error_cb = origin_error_cb;
     zend_throw_exception_hook = NULL;
@@ -1125,6 +1409,7 @@ static zend_function_entry elog_functions[] = {
     ZEND_FE(elog_filter_add_request, arginfo_elog_filter_function)
     ZEND_FE(elog_filter_add_level, arginfo_elog_filter_function)
     ZEND_FE(elog_filter_add_trace, arginfo_elog_filter_function)
+    ZEND_FE(elog_shutdown_execute, arginfo_elog_shutdown_execute)
     ZEND_FE_END
 };
 

@@ -3,7 +3,7 @@
 #define PHP_ELOG_H
 
 #define ELOG_NAMESPACE "elog"
-#define ELOG_EXT_VERSION "0.1.2"
+#define ELOG_EXT_VERSION "0.1.3"
 
 #define EL_FILTER_APPEND  1
 #define EL_FILTER_PREPEND 2
@@ -70,6 +70,13 @@ ZEND_BEGIN_MODULE_GLOBALS(elog)
         HashTable *registers;
         HashTable *enabled;
     } filter;
+    struct {
+        zend_bool enable;
+        long type;
+        char *destination;
+        char *options;
+        zval *messages;
+    } shutdown;
 ZEND_END_MODULE_GLOBALS(elog)
 
 #ifdef ZTS
