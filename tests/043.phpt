@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_json
+elog to: json
 --INI--
 --SKIPIF--
 --FILE--
@@ -11,9 +11,7 @@ $log = dirname(__FILE__) . "/tmp_043.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-
-echo "[ append: elog_filter_to_json ]\n";
-var_dump(elog_append_filter('elog_filter_to_json'));
+ini_set('elog.to', 'json');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -54,8 +52,6 @@ test($file, $log);
 fclose($file);
 ?>
 --EXPECTF--
-[ append: elog_filter_to_json ]
-bool(true)
 [ boolean ]
 bool(true)
 === output ===
@@ -90,7 +86,7 @@ array(3) {
   string(1) "c"
 }
 === output ===
-["a","b","c"]
+{"message":["a","b","c"]}
 [ array ]
 array(3) {
   ["a"]=>
@@ -101,7 +97,7 @@ array(3) {
   string(1) "C"
 }
 === output ===
-{"a":"A","b":"B","c":"C"}
+{"message":{"a":"A","b":"B","c":"C"}}
 [ array ]
 array(3) {
   [0]=>
@@ -112,7 +108,7 @@ array(3) {
   string(1) "c"
 }
 === output ===
-{"0":"a","b":"B","1":"c"}
+{"message":{"0":"a","b":"B","1":"c"}}
 [ array ]
 array(2) {
   [0]=>
@@ -129,9 +125,9 @@ array(2) {
   }
 }
 === output ===
-["a",["b",["c"]]]
+{"message":["a",["b",["c"]]]}
 [ object ]
-object(stdClass)#1 (3) {
+object(stdClass)#%d (3) {
   ["a"]=>
   string(1) "A"
   ["b"]=>
@@ -140,30 +136,30 @@ object(stdClass)#1 (3) {
   string(1) "C"
 }
 === output ===
-{"a":"A","b":"B","c":"C"}
+{"message":{"a":"A","b":"B","c":"C"}}
 [ object ]
-object(stdClass)#1 (3) {
+object(stdClass)#%d (3) {
   ["a"]=>
   string(1) "A"
   ["b"]=>
-  object(stdClass)#2 (1) {
+  object(stdClass)#%d (1) {
     ["x"]=>
     string(1) "X"
   }
   ["c"]=>
-  object(stdClass)#3 (1) {
+  object(stdClass)#%d (1) {
     ["y"]=>
-    object(stdClass)#4 (1) {
+    object(stdClass)#%d (1) {
       ["z"]=>
       string(1) "Z"
     }
   }
 }
 === output ===
-{"a":"A","b":{"x":"X"},"c":{"y":{"z":"Z"}}}
+{"message":{"a":"A","b":{"x":"X"},"c":{"y":{"z":"Z"}}}}
 [ resource ]
 resource(%d) of type (stream)
 
-Warning: elog_filter_to_json(): Type is not supported in %s on line %d
+Warning: elog(): JSON type is no supported in %s on line %d
 === output ===
 {"message":null}

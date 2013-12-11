@@ -14,9 +14,6 @@ ini_set('elog.default_destination', $log);
 echo "[ append: elog_filter_add_fileline ]\n";
 var_dump(elog_append_filter('elog_filter_add_fileline'));
 
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
-
 echo "\n[ Array ]\n";
 $var = array('dummy');
 var_dump($var);
@@ -43,8 +40,6 @@ file_dump($log);
 --EXPECTF--
 [ append: elog_filter_add_fileline ]
 bool(true)
-[ append: elog_filter_to_string ]
-bool(true)
 
 [ Array ]
 array(1) {
@@ -52,11 +47,12 @@ array(1) {
   string(5) "dummy"
 }
 === output ===
-{
-  0: "dummy"
-  "elog_file": "%s/047.php"
-  "elog_line": 18
-}
+[
+  "dummy"
+]
+file: %s/047.php
+line: 15
+
 [ Array ]
 array(1) {
   ["dummy"]=>
@@ -65,9 +61,10 @@ array(1) {
 === output ===
 {
   "dummy": "DUMMY"
-  "elog_file": "%s/047.php"
-  "elog_line": 25
 }
+file: %s/047.php
+line: 22
+
 [ Object ]
 object(stdClass)#%d (1) {
   ["dummy"]=>
@@ -76,6 +73,6 @@ object(stdClass)#%d (1) {
 === output ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_file": "%s/047.php"
-  "elog_line": 33
 }
+file: %s/047.php
+line: 30

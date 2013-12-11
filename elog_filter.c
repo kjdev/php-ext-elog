@@ -17,7 +17,10 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(elog)
 
-#define elog_err(_flag,...) php_error_docref(NULL TSRMLS_CC, _flag, __VA_ARGS__)
+#define elog_err(_flag,...)                                   \
+    if (ELOG_G(display_errors)) {                             \
+        php_error_docref(NULL TSRMLS_CC, _flag, __VA_ARGS__); \
+    }
 
 #define ELOG_TYPE_ARRAY 1
 #define ELOG_TYPE_ASSOC 2
@@ -499,6 +502,504 @@ elog_var_json(zval **struc, json_t *obj, int json_type TSRMLS_DC)
 }
 
 PHP_ELOG_API void
+php_elog_to_string(zval *msg, zval *val, smart_str *str TSRMLS_DC)
+{
+    HashPosition pos;
+    char *str_key;
+    uint str_key_len;
+    ulong num_key;
+    zval **data;
+
+    if (msg) {
+        if (Z_TYPE_P(msg) != IS_STRING) {
+            elog_var_dump(&msg, 1, str, ELOG_MODE_DUMP TSRMLS_CC);
+        } else {
+            smart_str_appendl(str, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
+        }
+
+        if (str->c && str->c[str->len-1] != '\n') {
+            smart_str_appendl(str, PHP_EOL, strlen(PHP_EOL));
+        }
+    }
+
+    if (val) {
+        zend_hash_internal_pointer_reset_ex(HASH_OF(val), &pos);
+        while (zend_hash_get_current_data_ex(HASH_OF(val),
+                                             (void **)&data, &pos) == SUCCESS) {
+            if (zend_hash_get_current_key_ex(HASH_OF(val),
+                                             &str_key, &str_key_len,
+                                             &num_key, 1,
+                                             &pos) == HASH_KEY_IS_STRING) {
+                char *label = NULL;
+                if (strcmp(str_key, "level") == 0) {
+                    label = ELOG_G(label_level);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_LEVEL;
+                    }
+                    smart_str_appendl(str, label, strlen(label));
+                    smart_str_appendl(str, ": ", 2);
+                    smart_str_appendl(str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+                } else if (strcmp(str_key, "file") == 0) {
+                    label = ELOG_G(label_file);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_FILE;
+                    }
+                    smart_str_appendl(str, label, strlen(label));
+                    smart_str_appendl(str, ": ", 2);
+                    smart_str_appendl(str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+                } else if (strcmp(str_key, "line") == 0) {
+                    label = ELOG_G(label_line);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_LINE;
+                    }
+                    smart_str_appendl(str, label, strlen(label));
+                    smart_str_appendl(str, ": ", 2);
+                    smart_str_append_long(str, Z_LVAL_PP(data));
+                } else if (strcmp(str_key, "timestamp") == 0) {
+                    label = ELOG_G(label_timestamp);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_TIMESTAMP;
+                    }
+                    smart_str_appendl(str, label, strlen(label));
+                    smart_str_appendl(str, ": ", 2);
+                    smart_str_appendl(str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+                } else if (strcmp(str_key, "request") == 0) {
+                    label = ELOG_G(label_request);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_REQUEST;
+                    }
+                    smart_str_appendl(str, label, strlen(label));
+                    smart_str_appendl(str, ": ", 2);
+                    elog_var_dump(data, 1, str, ELOG_MODE_DUMP TSRMLS_CC);
+                } else if (strcmp(str_key, "trace") == 0) {
+                    label = ELOG_G(label_trace);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_TRACE;
+                    }
+                    smart_str_appendl(str, label, strlen(label));
+                    smart_str_appendl(str, ": ", 2);
+                    elog_var_dump(data, 1, str, ELOG_MODE_DUMP TSRMLS_CC);
+                } else if (strcmp(str_key, "msg") == 0 && msg == NULL) {
+                    label = EL_LABEL_MESSAGE;
+                    if (Z_TYPE_PP(data) != IS_STRING) {
+                        elog_var_dump(data, 1, str, ELOG_MODE_DUMP TSRMLS_CC);
+                    } else {
+                        smart_str_appendl(str,
+                                          Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+                    }
+                }
+
+                if (label && str->c && str->c[str->len-1] != '\n') {
+                    smart_str_appendl(str, PHP_EOL, strlen(PHP_EOL));
+                }
+
+                efree(str_key);
+            }
+            zend_hash_move_forward_ex(HASH_OF(val), &pos);
+        }
+    }
+}
+
+static json_t *
+php_elog_zval_to_json(zval *val TSRMLS_DC)
+{
+    int json_type = ELOG_TYPE_ASSOC;
+
+    switch (Z_TYPE_P(val)) {
+        case IS_BOOL:
+            return json_boolean(Z_LVAL_P(val));
+        case IS_NULL:
+            return json_null();
+        case IS_LONG:
+            return json_integer(Z_LVAL_P(val));
+            break;
+        case IS_DOUBLE: {
+            double dbl = Z_DVAL_P(val);
+            if (!zend_isinf(dbl) && !zend_isnan(dbl)) {
+                return json_real(dbl);
+            }
+            elog_err(E_WARNING, "Inf and Nan cannot be JSON encoded");
+            return json_integer(0);
+        }
+        case IS_STRING:
+            return json_string(Z_STRVAL_P(val));
+        case IS_ARRAY:
+            if (!ELOG_G(json_assoc)) {
+                json_type = elog_array_type(val TSRMLS_CC);
+            }
+        case IS_OBJECT: {
+            json_t *element;
+            if (json_type == ELOG_TYPE_ARRAY) {
+                element = json_array();
+            } else {
+                element = json_object();
+            }
+            if (elog_var_json(&val, element, json_type TSRMLS_CC) == 0) {
+                return element;
+            }
+            json_delete(element);
+            return json_null();
+        }
+        default:
+            elog_err(E_WARNING, "JSON type is no supported");
+            return json_null();
+    }
+}
+
+static void
+php_elog_json_to_string(json_t *json, smart_str *str, char *def TSRMLS_DC)
+{
+    int flags = JSON_COMPACT | JSON_ENCODE_ANY | JSON_PRESERVE_ORDER;
+    char *tmp = NULL;
+
+    if (ELOG_G(json_unicode_escape)) {
+        flags |= JSON_ENSURE_ASCII;
+    }
+
+    tmp = json_dumps(json, flags);
+
+    if (tmp) {
+        smart_str_appendl(str, tmp, strlen(tmp));
+        free(tmp);
+    } else if (def) {
+        smart_str_appendl(str, def, strlen(def));
+    }
+
+    json_delete(json);
+}
+
+PHP_ELOG_API void
+php_elog_zval_to_json_string(zval *val, smart_str *str TSRMLS_DC)
+{
+    json_t *json = php_elog_zval_to_json(val TSRMLS_CC);
+    php_elog_json_to_string(json, str, "\"\"" TSRMLS_CC);
+}
+
+PHP_ELOG_API void
+php_elog_to_json(zval *msg, zval *val, smart_str *str TSRMLS_DC)
+{
+    HashPosition pos;
+    char *str_key;
+    uint str_key_len;
+    ulong num_key;
+    zval **data;
+    json_t *obj;
+
+    obj = json_object();
+    if (!obj) {
+        return;
+    }
+
+    if (msg) {
+        char *label = NULL;
+        label = ELOG_G(label_message);
+        if (!label || strlen(label) <= 0) {
+            label = EL_LABEL_MESSAGE;
+        }
+        json_object_set_new(obj, label, php_elog_zval_to_json(msg TSRMLS_CC));
+    }
+
+    if (val) {
+        zend_hash_internal_pointer_reset_ex(HASH_OF(val), &pos);
+        while (zend_hash_get_current_data_ex(HASH_OF(val),
+                                             (void **)&data, &pos) == SUCCESS) {
+            if (zend_hash_get_current_key_ex(HASH_OF(val),
+                                             &str_key, &str_key_len,
+                                             &num_key, 1,
+                                             &pos) == HASH_KEY_IS_STRING) {
+                char *label = NULL;
+                if (strcmp(str_key, "level") == 0) {
+                    label = ELOG_G(label_level);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_LEVEL;
+                    }
+                    json_object_set_new(obj, label,
+                                        json_string(Z_STRVAL_PP(data)));
+                } else if (strcmp(str_key, "file") == 0) {
+                    label = ELOG_G(label_file);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_FILE;
+                    }
+                    json_object_set_new(obj, label,
+                                        json_string(Z_STRVAL_PP(data)));
+                } else if (strcmp(str_key, "line") == 0) {
+                    label = ELOG_G(label_line);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_LINE;
+                    }
+                    json_object_set_new(obj, label,
+                                        json_integer(Z_LVAL_PP(data)));
+                } else if (strcmp(str_key, "timestamp") == 0) {
+                    label = ELOG_G(label_timestamp);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_TIMESTAMP;
+                    }
+                    json_object_set_new(obj, label,
+                                        json_string(Z_STRVAL_PP(data)));
+                } else if (strcmp(str_key, "request") == 0) {
+                    json_t *request;
+                    label = ELOG_G(label_request);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_REQUEST;
+                    }
+                    request = json_object();
+                    if (elog_var_json(data, request,
+                                      ELOG_TYPE_ASSOC TSRMLS_CC) == 0) {
+                        json_object_set_new(obj, label, request);
+                    } else {
+                        json_object_set_new(obj, label, json_null());
+                        json_delete(request);
+                    }
+                } else if (strcmp(str_key, "trace") == 0) {
+                    json_t *trace;
+                    label = ELOG_G(label_trace);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_TRACE;
+                    }
+                    trace = json_array();
+                    if (elog_var_json(data, trace,
+                                      ELOG_TYPE_ARRAY TSRMLS_CC) == 0) {
+                        json_object_set_new(obj, label, trace);
+                    } else {
+                        json_object_set_new(obj, label, json_null());
+                        json_delete(trace);
+                    }
+                } else if (strcmp(str_key, "msg") == 0 && msg == NULL) {
+                    label = ELOG_G(label_message);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_MESSAGE;
+                    }
+                    json_object_set_new(obj, label,
+                                        php_elog_zval_to_json(*data TSRMLS_CC));
+                }
+                efree(str_key);
+            }
+            zend_hash_move_forward_ex(HASH_OF(val), &pos);
+        }
+    }
+
+    php_elog_json_to_string(obj, str, "{}" TSRMLS_CC);
+}
+
+static void
+php_elog_http_add_zval(smart_str *str, char *label,
+                       long encode, zval *val TSRMLS_DC)
+{
+    switch (Z_TYPE_P(val)) {
+        case IS_BOOL:
+            smart_str_appendl(str, label, strlen(label));
+            if (Z_LVAL_P(val)) {
+                smart_str_appendl(str, "=1", 2);
+            } else {
+                smart_str_appendl(str, "=0", 2);
+            }
+            break;
+        case IS_LONG:
+        case IS_DOUBLE:
+            convert_to_string(val);
+        case IS_STRING: {
+            char *s;
+            int len;
+            if (encode == PHP_QUERY_RFC3986) {
+                s = php_raw_url_encode(Z_STRVAL_P(val), Z_STRLEN_P(val), &len);
+            } else {
+                s = php_url_encode(Z_STRVAL_P(val), Z_STRLEN_P(val), &len);
+            }
+            smart_str_appendl(str, label, strlen(label));
+            smart_str_appendc(str, '=');
+            smart_str_appendl(str, s, len);
+            efree(s);
+            break;
+        }
+        case IS_ARRAY:
+        case IS_OBJECT: {
+            char *separator = ELOG_G(http_separator);
+            size_t prefix_len = strlen(label) + sizeof("%5B");
+            size_t suffix_len = sizeof("%5B") - 1;
+            char *prefix = emalloc(prefix_len);
+            char *suffix = "%5D";
+            if (prefix) {
+                snprintf(prefix, prefix_len, "%s%s", label, "%5B");
+                prefix_len = strlen(prefix);
+            } else {
+                prefix = NULL;
+                suffix = NULL;
+                prefix_len = 0;
+                suffix_len = 0;
+            }
+            php_url_encode_hash_ex(HASH_OF(val), str,
+                                   NULL, 0,
+                                   prefix, prefix_len,
+                                   suffix, suffix_len,
+                                   (Z_TYPE_P(val) == IS_OBJECT ? val : NULL),
+                                   separator, encode TSRMLS_CC);
+            if (prefix) {
+                efree(prefix);
+            }
+            break;
+        }
+        case IS_NULL:
+        default:
+            break;
+    }
+}
+
+PHP_ELOG_API void
+php_elog_to_http(zval *msg, zval *val, smart_str *str TSRMLS_DC)
+{
+    HashPosition pos;
+    char *str_key;
+    uint str_key_len;
+    ulong num_key;
+    zval **data;
+    char *separator = ELOG_G(http_separator);
+    long encode = ELOG_G(http_encode);
+    int amp = 0;
+
+    if (!encode) {
+        encode = PHP_QUERY_RFC1738;
+    }
+
+    if (msg) {
+        char *label = NULL;
+        label = ELOG_G(label_message);
+        if (!label || strlen(label) <= 0) {
+            label = EL_LABEL_MESSAGE;
+        }
+        php_elog_http_add_zval(str, label, encode, msg TSRMLS_CC);
+        amp = 1;
+    }
+
+    if (val) {
+        zend_hash_internal_pointer_reset_ex(HASH_OF(val), &pos);
+        while (zend_hash_get_current_data_ex(HASH_OF(val),
+                                             (void **)&data, &pos) == SUCCESS) {
+            if (zend_hash_get_current_key_ex(HASH_OF(val),
+                                             &str_key, &str_key_len,
+                                             &num_key, 1,
+                                             &pos) == HASH_KEY_IS_STRING) {
+                char *label = NULL;
+                if (strcmp(str_key, "level") == 0) {
+                    label = ELOG_G(label_level);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_LEVEL;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_elog_http_add_zval(str, label, encode, *data TSRMLS_CC);
+                } else if (strcmp(str_key, "file") == 0) {
+                    label = ELOG_G(label_file);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_FILE;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_elog_http_add_zval(str, label, encode, *data TSRMLS_CC);
+                } else if (strcmp(str_key, "line") == 0) {
+                    label = ELOG_G(label_line);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_LINE;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_elog_http_add_zval(str, label, encode, *data TSRMLS_CC);
+                } else if (strcmp(str_key, "timestamp") == 0) {
+                    label = ELOG_G(label_timestamp);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_TIMESTAMP;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_elog_http_add_zval(str, label, encode, *data TSRMLS_CC);
+                } else if (strcmp(str_key, "request") == 0) {
+                    size_t prefix_len = sizeof("%5B");
+                    size_t suffix_len = sizeof("%5B") - 1;
+                    char *prefix = NULL, *suffix = "%5D";
+                    label = ELOG_G(label_request);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_REQUEST;
+                    }
+                    prefix_len += strlen(label);
+                    prefix = emalloc(prefix_len);
+                    if (prefix) {
+                        snprintf(prefix, prefix_len, "%s%s", label, "%5B");
+                        prefix_len = strlen(prefix);
+                    } else {
+                        prefix = NULL;
+                        suffix = NULL;
+                        prefix_len = 0;
+                        suffix_len = 0;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_url_encode_hash_ex(HASH_OF(*data), str,
+                                           NULL, 0,
+                                           prefix, prefix_len,
+                                           suffix, suffix_len,
+                                           NULL, separator, encode TSRMLS_CC);
+                    if (prefix) {
+                        efree(prefix);
+                    }
+                } else if (strcmp(str_key, "trace") == 0) {
+                    size_t prefix_len = sizeof("%5B");
+                    size_t suffix_len = sizeof("%5B") - 1;
+                    char *prefix = NULL, *suffix = "%5D";
+                    label = ELOG_G(label_trace);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_TRACE;
+                    }
+                    prefix_len += strlen(label);
+                    prefix = emalloc(prefix_len);
+                    if (prefix) {
+                        snprintf(prefix, prefix_len, "%s%s", label, "%5B");
+                        prefix_len = strlen(prefix);
+                    } else {
+                        prefix = NULL;
+                        suffix = NULL;
+                        prefix_len = 0;
+                        suffix_len = 0;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_url_encode_hash_ex(HASH_OF(*data), str,
+                                           NULL, 0,
+                                           prefix, prefix_len,
+                                           suffix, suffix_len,
+                                           NULL, separator, encode TSRMLS_CC);
+                    if (prefix) {
+                        efree(prefix);
+                    }
+                } else if (strcmp(str_key, "msg") == 0 && msg == NULL) {
+                    label = ELOG_G(label_message);
+                    if (!label || strlen(label) <= 0) {
+                        label = EL_LABEL_MESSAGE;
+                    }
+                    if (amp) {
+                        smart_str_appendc(str, '&');
+                    }
+                    amp = 1;
+                    php_elog_http_add_zval(str, label, encode, *data TSRMLS_CC);
+                }
+                efree(str_key);
+            }
+            zend_hash_move_forward_ex(HASH_OF(val), &pos);
+        }
+    }
+}
+
+PHP_ELOG_API void
 php_elog_filter_data_dtor(php_elog_filter_data_t *data)
 {
     if (data && data->function && data->dtor) {
@@ -506,7 +1007,7 @@ php_elog_filter_data_dtor(php_elog_filter_data_t *data)
     }
 }
 
-static inline int
+static int
 elog_filter_data_append(char *name, int len TSRMLS_DC)
 {
     php_elog_filter_data_t *pdata = NULL;
@@ -546,7 +1047,7 @@ elog_filter_data_append(char *name, int len TSRMLS_DC)
     return FAILURE;
 }
 
-static inline int
+static int
 elog_filter_data_prepend(char *name, int len TSRMLS_DC)
 {
     int is_dtor = 0;
@@ -792,6 +1293,7 @@ ZEND_FUNCTION(elog_prepend_filter)
                     }
                 }
                 if (filter == NULL) {
+                    zend_hash_move_forward_ex(myht, &pos);
                     continue;
                 }
 
@@ -907,44 +1409,47 @@ ZEND_FUNCTION(elog_remove_filter)
         zend_hash_move_forward_ex(ELOG_G(filter).enabled, &pos);          \
     } while (1)
 
+#define ELOG_FILTER_GET_EXECUTE(_ht)                                \
+    do {                                                            \
+        if (ELOG_G(exec_filter)) {                                  \
+            char *str, *token;                                      \
+            spprintf(&str, 0, "%s", ELOG_G(exec_filter));           \
+            token = str;                                            \
+            while (1) {                                             \
+                int len;                                            \
+                char *name = strtok(token, ",");                    \
+                if (name == NULL) {                                 \
+                    break;                                          \
+                }                                                   \
+                while (*name == ' ') {                              \
+                    name++;                                         \
+                }                                                   \
+                len = strlen(name) - 1;                             \
+                while (*(name+len) == ' ' && len > 0) {             \
+                    *(name+len) = '\0';                             \
+                    len--;                                          \
+                }                                                   \
+                if (_ht == NULL ||                                  \
+                    !zend_hash_exists(_ht, name, strlen(name)+1)) { \
+                    MAKE_STD_ZVAL(val);                             \
+                    ZVAL_STRINGL(val, name, strlen(name), 1);       \
+                    add_next_index_zval(arr, val);                  \
+                }                                                   \
+                token = NULL;                                       \
+            }                                                       \
+            efree(str);                                             \
+        }                                                           \
+    } while (0)
 
-#define ELOG_FILTER_GET_EXECUTE(_ht)                            \
-    if (ELOG_G(exec_filter)) {                                  \
-        char *str, *token;                                      \
-        spprintf(&str, 0, "%s", ELOG_G(exec_filter));           \
-        token = str;                                            \
-        while (1) {                                             \
-            int len;                                            \
-            char *name = strtok(token, ",");                    \
-            if (name == NULL) {                                 \
-                break;                                          \
-            }                                                   \
-            while (*name == ' ') {                              \
-                name++;                                         \
-            }                                                   \
-            len = strlen(name) - 1;                             \
-            while (*(name+len) == ' ' && len > 0) {             \
-                *(name+len) = '\0';                             \
-                len--;                                          \
-            }                                                   \
-            if (_ht == NULL ||                                  \
-                !zend_hash_exists(_ht, name, strlen(name)+1)) { \
-                MAKE_STD_ZVAL(val);                             \
-                ZVAL_STRINGL(val, name, strlen(name), 1);       \
-                add_next_index_zval(arr, val);                  \
-            }                                                   \
-            token = NULL;                                       \
-        }                                                       \
-        efree(str);                                             \
-    }
-
-#define ELOG_FILTER_RETVAL_COPY_ARRAY(_val)  \
-    COPY_PZVAL_TO_ZVAL(*return_value, _val); \
-    Z_ADDREF_P(_val)
-
+#define ELOG_FILTER_RETVAL_COPY_ARRAY(_val)      \
+    do {                                         \
+        COPY_PZVAL_TO_ZVAL(*return_value, _val); \
+        Z_ADDREF_P(_val);                        \
+    } while (0)
 
 #define ELOG_FILTER_RETVAL_COPY_OBJECT(_val)                         \
-    zval *tmp;                                                       \
+    do {                                                             \
+        zval *tmp;                                                   \
         if (Z_OBJ_HT_P(_val)->get_class_entry) {                     \
             zend_class_entry *ce = Z_OBJCE_P(_val);                  \
             object_init_ex(return_value, ce);                        \
@@ -953,7 +1458,30 @@ ZEND_FUNCTION(elog_remove_filter)
         }                                                            \
         zend_hash_copy(Z_OBJPROP_P(return_value), Z_OBJPROP_P(_val), \
                        (copy_ctor_func_t)zval_add_ref,               \
-                       (void *)&tmp, sizeof(zval *))
+                       (void *)&tmp, sizeof(zval *))                 \
+    } while (0)
+
+static char *builtin_name[] = { "elog_filter_add_fileline",
+                                "elog_filter_add_timestamp",
+                                "elog_filter_add_request",
+                                "elog_filter_add_level",
+                                "elog_filter_add_trace",
+                                NULL };
+
+PHP_ELOG_API int
+php_elog_filter_is_builtin(zval *func)
+{
+    int i;
+    if (!func || Z_TYPE_P(func) != IS_STRING) {
+        return FAILURE;
+    }
+    for (i = 0; builtin_name[i] != NULL; i++) {
+        if (strcmp(Z_STRVAL_P(func), builtin_name[i]) == 0) {
+            return SUCCESS;
+        }
+    }
+    return FAILURE;
+}
 
 ZEND_FUNCTION(elog_get_filter)
 {
@@ -964,16 +1492,7 @@ ZEND_FUNCTION(elog_get_filter)
     uint str_key_len;
     ulong num_key;
     HashPosition pos;
-    int i, builtin_count = 9;
-    char *builtin_name[9] = { "elog_filter_to_string",
-                              "elog_filter_to_json",
-                              "elog_filter_to_http_query",
-                              "elog_filter_to_array",
-                              "elog_filter_add_eol",
-                              "elog_filter_add_fileline",
-                              "elog_filter_add_timestamp",
-                              "elog_filter_add_request",
-                              "elog_filter_add_level" };
+    int i;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "|s", &filter, &filter_len) == FAILURE) {
@@ -983,7 +1502,7 @@ ZEND_FUNCTION(elog_get_filter)
     array_init(return_value);
 
     ELOG_BEGIN_FILTER_GET(builtin);
-    for (i = 0; i < builtin_count; i++) {
+    for (i = 0; builtin_name[i] != NULL; i++) {
         MAKE_STD_ZVAL(val);
         ZVAL_STRINGL(val, builtin_name[i], strlen(builtin_name[i]), 1);
         add_next_index_zval(arr, val);
@@ -1004,328 +1523,12 @@ ZEND_FUNCTION(elog_get_filter)
     ELOG_END_FILTER_GET(enabled);
 }
 
-ZEND_FUNCTION(elog_filter_to_string)
-{
-    zval *msg;
-    long level = EL_LEVEL_ALL;
-    smart_str buf = {0};
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                              "z|l", &msg, &level) == FAILURE) {
-        return;
-    }
-
-    if (Z_TYPE_P(msg) != IS_STRING) {
-        elog_var_dump(&msg, 1, &buf, ELOG_MODE_DUMP TSRMLS_CC);
-    } else {
-        smart_str_appendl(&buf, Z_STRVAL_P(msg), Z_STRLEN_P(msg));
-    }
-
-    /*
-    if (buf.c && buf.c[buf.len-1] != '\n') {
-        smart_str_appendl(&buf, PHP_EOL, strlen(PHP_EOL));
-    }
-    */
-    smart_str_0(&buf);
-
-    RETVAL_STRINGL(buf.c, buf.len, 1);
-
-    smart_str_free(&buf);
-}
-
-ZEND_FUNCTION(elog_filter_to_array)
-{
-    zval *msg;
-    long level = EL_LEVEL_ALL;
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                              "z|l", &msg, &level) == FAILURE) {
-        return;
-    }
-
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-        convert_to_array(return_value);
-    } else {
-        Z_ADDREF_P(msg);
-        array_init(return_value);
-        if (ELOG_G(array_assoc)) {
-            char *label_scalar = ELOG_G(label_scalar);
-            if (!label_scalar || strlen(label_scalar) <= 0) {
-                label_scalar = EL_LABEL_SCALAR;
-            }
-            add_assoc_zval_ex(return_value, label_scalar,
-                              strlen(label_scalar)+1, msg);
-        } else {
-            add_next_index_zval(return_value, msg);
-        }
-    }
-}
-
-ZEND_FUNCTION(elog_filter_to_json)
-{
-    zval *msg;
-    long level = EL_LEVEL_ALL;
-    json_t *obj = NULL;
-    char *tmp_str, *label_scalar;
-    int json_type = ELOG_TYPE_ASSOC;
-    int json_flags = JSON_COMPACT | JSON_ENCODE_ANY | JSON_PRESERVE_ORDER;
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                              "z|l", &msg, &level) == FAILURE) {
-        return;
-    }
-
-    label_scalar = ELOG_G(label_scalar);
-    if (!label_scalar || strlen(label_scalar) <= 0) {
-        label_scalar = EL_LABEL_SCALAR;
-    }
-
-    obj = json_object();
-    if (!obj) {
-        return;
-    }
-
-    switch (Z_TYPE_P(msg)) {
-        case IS_BOOL:
-            json_object_set_new(obj, label_scalar, json_boolean(Z_LVAL_P(msg)));
-            break;
-        case IS_NULL:
-            json_object_set_new(obj, label_scalar, json_null());
-            break;
-        case IS_LONG:
-            json_object_set_new(obj, label_scalar, json_integer(Z_LVAL_P(msg)));
-            break;
-        case IS_DOUBLE: {
-            double dbl = Z_DVAL_P(msg);
-            if (!zend_isinf(dbl) && !zend_isnan(dbl)) {
-                json_object_set_new(obj, label_scalar, json_real(dbl));
-            } else {
-                elog_err(E_WARNING, "Inf and Nan cannot be JSON encoded");
-                json_object_set_new(obj, label_scalar, json_integer(0));
-            }
-            break;
-        }
-        case IS_STRING:
-            json_object_set_new(obj, label_scalar, json_string(Z_STRVAL_P(msg)));
-            break;
-        case IS_ARRAY:
-            if (!ELOG_G(json_assoc)) {
-                json_type = elog_array_type(msg TSRMLS_CC);
-                if (json_type == ELOG_TYPE_ARRAY) {
-                    json_delete(obj);
-                    obj = json_array();
-                    if (!obj) {
-                        return;
-                    }
-                }
-            }
-        case IS_OBJECT:
-            elog_var_json(&msg, obj, json_type TSRMLS_CC);
-            break;
-        default:
-            elog_err(E_WARNING, "Type is not supported");
-            json_object_set_new(obj, label_scalar, json_null());
-            break;
-    }
-
-    if (ELOG_G(json_unicode_escape)) {
-        json_flags |= JSON_ENSURE_ASCII;
-    }
-
-    tmp_str = json_dumps(obj, json_flags);
-
-    if (tmp_str) {
-        RETVAL_STRING(tmp_str, 1);
-        free(tmp_str);
-    } else {
-        RETVAL_STRINGL("{}", 2, 1);
-    }
-
-    json_delete(obj);
-}
-
-ZEND_FUNCTION(elog_filter_to_http_query)
-{
-    zval *msg;
-    long level = EL_LEVEL_ALL;
-    char *label_scalar;
-    smart_str buf = {0};
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                              "z|l", &msg, &level) == FAILURE) {
-        return;
-    }
-
-    label_scalar = ELOG_G(label_scalar);
-    if (!label_scalar || strlen(label_scalar) <= 0) {
-        label_scalar = EL_LABEL_SCALAR;
-    }
-
-    switch (Z_TYPE_P(msg)) {
-        case IS_BOOL:
-            smart_str_appendl(&buf, label_scalar, strlen(label_scalar));
-            if (Z_LVAL_P(msg)) {
-                smart_str_appendl(&buf, "=1", 2);
-            } else {
-                smart_str_appendl(&buf, "=0", 2);
-            }
-            break;
-        case IS_LONG:
-        case IS_DOUBLE:
-            convert_to_string(msg);
-        case IS_STRING: {
-            char *str;
-            int str_len;
-
-            if (ELOG_G(http_encode) == PHP_QUERY_RFC3986) {
-                str = php_raw_url_encode(Z_STRVAL_P(msg), Z_STRLEN_P(msg),
-                                         &str_len);
-            } else {
-                str = php_url_encode(Z_STRVAL_P(msg), Z_STRLEN_P(msg), &str_len);
-            }
-
-            smart_str_appendl(&buf, label_scalar, strlen(label_scalar));
-            smart_str_appendl(&buf, "=", 1);
-            smart_str_appendl(&buf, str, str_len);
-
-            efree(str);
-            break;
-        }
-        case IS_ARRAY:
-        case IS_OBJECT: {
-            char *separator = ELOG_G(http_separator);
-            long encode = ELOG_G(http_encode);
-
-            if (!encode) {
-                encode = PHP_QUERY_RFC1738;
-            }
-
-            php_url_encode_hash_ex(HASH_OF(msg), &buf,
-                                   NULL, 0, NULL, 0, NULL, 0,
-                                   (Z_TYPE_P(msg) == IS_OBJECT ? msg : NULL),
-                                   separator, encode TSRMLS_CC);
-            break;
-        }
-        case IS_NULL:
-        default:
-            break;
-    }
-
-    smart_str_0(&buf);
-
-    RETVAL_STRINGL(buf.c, buf.len, 1);
-
-    smart_str_free(&buf);
-}
-
-#define ELOG_BEGIN_IS_JSON_STRING(_buf)                                     \
-    if (_buf.c && _buf.c[0] == '{' && _buf.c[_buf.len-1] == '}') {          \
-        json_t *json = json_loadb(_buf.c, _buf.len, JSON_DECODE_ANY, NULL); \
-        int json_flags = JSON_COMPACT|JSON_ENCODE_ANY|JSON_PRESERVE_ORDER;  \
-        char *json_str;                                                     \
-        if (json) {                                                         \
-            smart_str_free(&_buf)
-
-#define ELOG_END_IS_JSON_STRING(_ret) \
-            json_delete(json);        \
-            if (_ret) {               \
-                return;               \
-            }                         \
-        }                             \
-    }
-
-#define ELOG_JSON_SET(_key, _val) json_object_set_new(json, _key, _val)
-
-#define ELOG_JSON_RETVAL()                       \
-    do {                                         \
-        if (ELOG_G(json_unicode_escape)) {       \
-            json_flags |= JSON_ENSURE_ASCII;     \
-        }                                        \
-        json_str = json_dumps(json, json_flags); \
-        if (json_str) {                          \
-            RETVAL_STRING(json_str, 1);          \
-            free(json_str);                      \
-        }                                        \
-    } while(0)
-
-#define ELOG_HASH_ADD_STRINGL(_ht, _key, _str, _len, _duplicate)         \
-    do {                                                                 \
-        zval *zv;                                                        \
-        MAKE_STD_ZVAL(zv);                                               \
-        ZVAL_STRINGL(zv, _str, _len, _duplicate);                        \
-        if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
-                          (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
-            zval_ptr_dtor(&zv);                                          \
-        }                                                                \
-    } while(0)
-
-#define ELOG_HASH_ADD_LONG(_ht, _key, _val)                              \
-   do {                                                                  \
-       zval *zv;                                                         \
-        MAKE_STD_ZVAL(zv);                                               \
-        ZVAL_LONG(zv, _val);                                             \
-        if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
-                          (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
-            zval_ptr_dtor(&zv);                                          \
-        }                                                                \
-    } while(0)
-
-#define ELOG_HASH_ADD_NULL(_ht, _key)                                    \
-    do {                                                                 \
-        zval *zv;                                                        \
-        MAKE_STD_ZVAL(zv);                                               \
-        ZVAL_NULL(zv);                                                   \
-        if (zend_hash_add(_ht, _key, strlen(_key)+1,                     \
-                          (void *)&zv, sizeof(zval), NULL) != SUCCESS) { \
-            zval_ptr_dtor(&zv);                                          \
-        }                                                                \
-    } while(0)
-
-#define ELOG_HASH_ADD_ZVAL(_ht, _key, _val) \
-    zend_hash_add(_ht, _key, strlen(_key)+1, (void *)_val, sizeof(zval), NULL)
-
-#define ELOG_ADD_EOL(_buf)                                  \
-    if (!_buf.c || _buf.c[_buf.len-1] != '\n') {            \
-        smart_str_appendl(&_buf, PHP_EOL, strlen(PHP_EOL)); \
-    }
-
-ZEND_FUNCTION(elog_filter_add_eol)
-{
-    zval *msg;
-    long level = EL_LEVEL_ALL;
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                              "z|l", &msg, &level) == FAILURE) {
-        return;
-    }
-
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-    } else {
-        smart_str buf = {0};
-
-        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-        ELOG_ADD_EOL(buf);
-        smart_str_0(&buf);
-
-        RETVAL_STRINGL(buf.c, buf.len, 1);
-        smart_str_free(&buf);
-    }
-}
-
 ZEND_FUNCTION(elog_filter_add_fileline)
 {
     zval *msg;
     long level = EL_LEVEL_ALL;
-    char *filename = NULL, *label_file, *label_line;
+    char *filename = NULL;
     long lineno = 0;
-    HashTable *ht_retval = NULL;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "z|l", &msg, &level) == FAILURE) {
@@ -1340,85 +1543,31 @@ ZEND_FUNCTION(elog_filter_add_fileline)
         lineno = zend_get_executed_lineno(TSRMLS_C);
     } else {
         filename = NULL;
-        lineno = 0;
+        lineno = -1;
     }
 
-    label_file = ELOG_G(label_file);
-    if (!label_file || strlen(label_file) <= 0) {
-        label_file = EL_LABEL_FILE;
+    if (filename) {
+        add_assoc_stringl_ex(msg, "file", sizeof("file"),
+                             filename, strlen(filename), 1);
     }
-    label_line = ELOG_G(label_line);
-    if (!label_line || strlen(label_line) <= 0) {
-        label_line = EL_LABEL_LINE;
-    }
-
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-        ht_retval = Z_ARRVAL_P(return_value);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-        ht_retval = Z_OBJPROP_P(return_value);
+    if (lineno >= 0) {
+        add_assoc_long_ex(msg, "line", sizeof("line"), lineno);
     }
 
-    if (ht_retval) {
-        if (filename) {
-            ELOG_HASH_ADD_STRINGL(ht_retval, label_file,
-                                  filename, strlen(filename), 1);
-        }
-        if (lineno) {
-            ELOG_HASH_ADD_LONG(ht_retval, label_line, lineno);
-        }
-    } else {
-        smart_str buf = {0};
-
-        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-        if (filename) {
-            ELOG_BEGIN_IS_JSON_STRING(buf);
-            ELOG_JSON_SET(label_file, json_string(filename));
-            ELOG_JSON_SET(label_line, json_integer(lineno));
-            ELOG_JSON_RETVAL();
-            ELOG_END_IS_JSON_STRING(1);
-
-            ELOG_ADD_EOL(buf);
-
-            smart_str_appendl(&buf, label_file, strlen(label_file));
-            smart_str_appendl(&buf, ": ", 2);
-            smart_str_appendl(&buf, filename, strlen(filename));
-            if (lineno) {
-                smart_str_appendl(&buf, PHP_EOL, strlen(PHP_EOL));
-                smart_str_appendl(&buf, label_line, strlen(label_line));
-                smart_str_appendl(&buf, ": ", 2);
-                smart_str_append_long(&buf, lineno);
-            }
-            /* smart_str_appendl(&buf, PHP_EOL, strlen(PHP_EOL)); */
-        }
-
-        smart_str_0(&buf);
-
-        RETVAL_STRINGL(buf.c, buf.len, 1);
-
-        smart_str_free(&buf);
-    }
+    RETURN_ZVAL(msg, 1, 0);
 }
 
 ZEND_FUNCTION(elog_filter_add_timestamp)
 {
     zval *msg;
     long level = EL_LEVEL_ALL;
-    char *timestamp = NULL, *label_timestamp;
+    char *timestamp = NULL;
     char *format = "d-M-Y H:i:s e";
-    HashTable *ht_retval = NULL;
     time_t error_time;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "z|l", &msg, &level) == FAILURE) {
         return;
-    }
-
-    label_timestamp = ELOG_G(label_timestamp);
-    if (!label_timestamp || strlen(label_timestamp) <= 0) {
-        label_timestamp = EL_LABEL_TIMESTAMP;
     }
 
     time(&error_time);
@@ -1444,57 +1593,19 @@ ZEND_FUNCTION(elog_filter_add_timestamp)
 
     timestamp = php_format_date(format, strlen(format), error_time, 1 TSRMLS_CC);
 
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-        ht_retval = Z_ARRVAL_P(return_value);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-        ht_retval = Z_OBJPROP_P(return_value);
-    }
-
-    if (ht_retval) {
-        if (timestamp) {
-            ELOG_HASH_ADD_STRINGL(ht_retval, label_timestamp,
-                                  timestamp, strlen(timestamp), 1);
-        }
-    } else {
-        smart_str buf = {0};
-
-        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-        if (timestamp) {
-            ELOG_BEGIN_IS_JSON_STRING(buf);
-            ELOG_JSON_SET(label_timestamp, json_string(timestamp));
-            ELOG_JSON_RETVAL();
-            efree(timestamp);
-            ELOG_END_IS_JSON_STRING(1);
-
-            ELOG_ADD_EOL(buf);
-
-            smart_str_appendl(&buf, label_timestamp, strlen(label_timestamp));
-            smart_str_appendl(&buf, ": ", 2);
-            smart_str_appendl(&buf, timestamp, strlen(timestamp));
-            /* smart_str_appendl(&buf, PHP_EOL, strlen(PHP_EOL)); */
-        }
-
-        smart_str_0(&buf);
-
-        RETVAL_STRINGL(buf.c, buf.len, 1);
-
-        smart_str_free(&buf);
-    }
-
     if (timestamp) {
+        add_assoc_stringl_ex(msg, "timestamp", sizeof("timestamp"),
+                             timestamp, strlen(timestamp), 1);
         efree(timestamp);
     }
+
+    RETURN_ZVAL(msg, 1, 0);
 }
 
 ZEND_FUNCTION(elog_filter_add_request)
 {
     zval *msg;
     long level = EL_LEVEL_ALL;
-    char *label_request;
-    HashTable *ht_retval = NULL;
     zval **request = NULL;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
@@ -1502,96 +1613,26 @@ ZEND_FUNCTION(elog_filter_add_request)
         return;
     }
 
-    label_request = ELOG_G(label_request);
-    if (!label_request || strlen(label_request) <= 0) {
-        label_request = EL_LABEL_REQUEST;
-    }
-
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-        ht_retval = Z_ARRVAL_P(return_value);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-        ht_retval = Z_OBJPROP_P(return_value);
-    }
-
     if (zend_hash_find(&EG(symbol_table), "_REQUEST", sizeof("_REQUEST"),
                        (void **)&request) == SUCCESS) {
-        if (ht_retval) {
-            Z_ADDREF_PP(request);
-            ELOG_HASH_ADD_ZVAL(ht_retval, label_request, request);
-        } else {
-            smart_str buf = {0};
-
-            elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-            ELOG_BEGIN_IS_JSON_STRING(buf);
-            json_t *element = json_object();
-            if (element) {
-                if (elog_var_json(request, element,
-                                  ELOG_TYPE_ASSOC TSRMLS_CC) == 0) {
-                    json_object_set_new(json, label_request, element);
-                } else {
-                    json_delete(element);
-                }
-            }
-            ELOG_JSON_RETVAL();
-            ELOG_END_IS_JSON_STRING(1);
-
-            ELOG_ADD_EOL(buf);
-
-            smart_str_appendl(&buf, label_request, strlen(label_request));
-            smart_str_appendl(&buf, ": ", 2);
-
-            elog_var_dump(request, 1, &buf, ELOG_MODE_DUMP TSRMLS_CC);
-
-            smart_str_0(&buf);
-
-            RETVAL_STRINGL(buf.c, buf.len, 1);
-
-            smart_str_free(&buf);
-        }
+        Z_ADDREF_PP(request);
+        add_assoc_zval_ex(msg, "request", sizeof("request"), *request);
     } else {
-        if (ht_retval) {
-            ELOG_HASH_ADD_NULL(ht_retval, label_request);
-        } else {
-            smart_str buf = {0};
-
-            elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-            ELOG_BEGIN_IS_JSON_STRING(buf);
-            ELOG_JSON_SET(label_request, json_null());
-            ELOG_JSON_RETVAL();
-            ELOG_END_IS_JSON_STRING(1);
-
-            ELOG_ADD_EOL(buf);
-
-            smart_str_appendl(&buf, label_request, strlen(label_request));
-            smart_str_appendl(&buf, ": NULL", 6);
-            smart_str_0(&buf);
-
-            RETVAL_STRINGL(buf.c, buf.len, 1);
-
-            smart_str_free(&buf);
-        }
+        add_assoc_null_ex(msg, "request", sizeof("request"));
     }
+
+    RETURN_ZVAL(msg, 1, 0);
 }
 
 ZEND_FUNCTION(elog_filter_add_level)
 {
     zval *msg;
     long level = EL_LEVEL_ALL;
-    char *level_name = NULL, *label_level;
-    HashTable *ht_retval = NULL;
+    char *level_name = NULL;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "z|l", &msg, &level) == FAILURE) {
         return;
-    }
-
-    label_level = ELOG_G(label_level);
-    if (!label_level || strlen(label_level) <= 0) {
-        label_level = EL_LABEL_LEVEL;
     }
 
     switch (level) {
@@ -1625,79 +1666,31 @@ ZEND_FUNCTION(elog_filter_add_level)
             break;
     }
 
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-        ht_retval = Z_ARRVAL_P(return_value);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-        ht_retval = Z_OBJPROP_P(return_value);
+    if (level_name) {
+        add_assoc_stringl_ex(msg, "level", sizeof("level"),
+                             level_name, strlen(level_name), 1);
     }
 
-    if (ht_retval) {
-        if (level_name) {
-            ELOG_HASH_ADD_STRINGL(ht_retval, label_level,
-                                  level_name, strlen(level_name), 1);
-        }
-    } else {
-        smart_str buf = {0};
-
-        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-        if (level_name) {
-            ELOG_BEGIN_IS_JSON_STRING(buf);
-            ELOG_JSON_SET(label_level, json_string(level_name));
-            ELOG_JSON_RETVAL();
-            ELOG_END_IS_JSON_STRING(1);
-
-            ELOG_ADD_EOL(buf);
-
-            smart_str_appendl(&buf, label_level, strlen(label_level));
-            smart_str_appendl(&buf, ": ", 2);
-            smart_str_appendl(&buf, level_name, strlen(level_name));
-        }
-
-        smart_str_0(&buf);
-
-        RETVAL_STRINGL(buf.c, buf.len, 1);
-
-        smart_str_free(&buf);
-    }
+    RETURN_ZVAL(msg, 1, 0);
 }
 
 ZEND_FUNCTION(elog_filter_add_trace)
 {
     zval *msg;
     long level = EL_LEVEL_ALL;
-    char *label_trace;
-    HashTable *ht_retval = NULL;
     zend_execute_data *ptr, *skip;
     int lineno, frameno = 0;
     const char *function_name;
     const char *filename;
     const char *class_name = NULL;
     char *call_type;
-    const char *include_filename = NULL;
     int indent = 0;
-    long options = 0;
     long limit = 0;
     zval *val;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "z|l", &msg, &level) == FAILURE) {
         return;
-    }
-
-    label_trace = ELOG_G(label_trace);
-    if (!label_trace || strlen(label_trace) <= 0) {
-        label_trace = EL_LABEL_TRACE;
-    }
-
-    if (Z_TYPE_P(msg) == IS_ARRAY) {
-        ELOG_FILTER_RETVAL_COPY_ARRAY(msg);
-        ht_retval = Z_ARRVAL_P(return_value);
-    } else if (Z_TYPE_P(msg) == IS_OBJECT) {
-        ELOG_FILTER_RETVAL_COPY_OBJECT(msg);
-        ht_retval = Z_OBJPROP_P(return_value);
     }
 
     MAKE_STD_ZVAL(val);
@@ -1764,15 +1757,12 @@ ZEND_FUNCTION(elog_filter_add_trace)
                 call_type = NULL;
             }
         } else {
-            zend_bool build_filename_arg = 1;
             if (!ptr->opline || ptr->opline->opcode != ZEND_INCLUDE_OR_EVAL) {
                 function_name = "unknown";
-                build_filename_arg = 0;
             } else {
                 switch (ptr->opline->extended_value) {
                     case ZEND_EVAL:
                         function_name = "eval";
-                        build_filename_arg = 0;
                         break;
                     case ZEND_INCLUDE:
                         function_name = "include";
@@ -1788,7 +1778,6 @@ ZEND_FUNCTION(elog_filter_add_trace)
                         break;
                     default:
                         function_name = "unknown";
-                        build_filename_arg = 0;
                         break;
                 }
             }
@@ -1840,7 +1829,6 @@ ZEND_FUNCTION(elog_filter_add_trace)
 
         smart_str_free(&trace);
 
-        include_filename = filename;
         ptr = skip->prev_execute_data;
         ++indent;
         if (free_class_name) {
@@ -1848,40 +1836,7 @@ ZEND_FUNCTION(elog_filter_add_trace)
         }
     }
 
-    if (ht_retval) {
-        Z_ADDREF_P(val);
-        ELOG_HASH_ADD_ZVAL(ht_retval, label_trace, &val);
-    } else {
-        smart_str buf = {0};
+    add_assoc_zval_ex(msg, "trace", sizeof("trace"), val);
 
-        elog_var_dump(&msg, 1, &buf, ELOG_MODE_CONVERT TSRMLS_CC);
-
-        ELOG_BEGIN_IS_JSON_STRING(buf);
-        json_t *element = json_array();
-        if (element) {
-            if (elog_var_json(&val, element, ELOG_TYPE_ARRAY TSRMLS_CC) == 0) {
-                json_object_set_new(json, label_trace, element);
-            } else {
-                json_delete(element);
-            }
-        }
-        ELOG_JSON_RETVAL();
-        zval_ptr_dtor(&val);
-        ELOG_END_IS_JSON_STRING(1);
-
-        ELOG_ADD_EOL(buf);
-
-        smart_str_appendl(&buf, label_trace, strlen(label_trace));
-        smart_str_appendl(&buf, ": ", 2);
-
-        elog_var_dump(&val, 1, &buf, ELOG_MODE_DUMP TSRMLS_CC);
-
-        smart_str_0(&buf);
-
-        RETVAL_STRINGL(buf.c, buf.len, 1);
-
-        smart_str_free(&buf);
-    }
-
-    zval_ptr_dtor(&val);
+    RETURN_ZVAL(msg, 1, 0);
 }

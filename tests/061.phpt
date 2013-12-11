@@ -34,18 +34,17 @@ function test($out1, $out2, $out3, $command) {
 
     elog("dummy\n",
          array(array(3, $out1, null, 'elog_filter_add_fileline'),
-               array(3, $out2, null, 'elog_filter_to_json'),
-               array(10, $command, 'hoge foo', 'elog_filter_to_json,elog_filter_add_fileline')));
+               array(3, $out2, null, null, 'json'),
+               array(10, $command, 'hoge foo', 'elog_filter_add_fileline', 'json')));
 
     echo "=== file 1: fileline ===\n";
     file_dump($out1);
-    echo "\n";
 
-    echo "=== file 2: json ===\n";
+    echo "=== file 2: to.json ===\n";
     file_dump($out2);
     echo "\n";
 
-    echo "=== $command: json, fileline ===\n";
+    echo "=== $command: fileline, to.json ===\n";
     file_dump($out3);
     echo "\n";
 };
@@ -58,7 +57,7 @@ echo "=== filter append: fn_1st ===\n";
 var_dump(elog_append_filter('fn_1st'));
 test($log_1, $log_2, $log_3, $command);
 
-echo "\n[ Test 2 ]\n";
+echo "\n[ Test 3 ]\n";
 echo "=== elog.filter_execute: fn_2nd ===\n";
 ini_set('elog.filter_execute', 'fn_2nd');
 echo ini_get('elog.filter_execute'), "\n";
@@ -82,13 +81,13 @@ array(0) {
 }
 === file 1: fileline ===
 dummy
-elog_file: %s/061.php
-elog_line: 33
-=== file 2: json ===
+file: %s/061.php
+line: 33
+=== file 2: to.json ===
 {"message":"dummy\n"}
-=== %s/test.sh: json, fileline ===
+=== %s/test.sh: fileline, to.json ===
 hoge foo
-{"message":"dummy\n","elog_file":"%s/061.php","elog_line":33}
+{"message":"dummy\n","file":"%s/061.php","line":33}
 
 
 [ Test 2 ]
@@ -112,16 +111,16 @@ array(1) {
 === file 1: fileline ===
 dummy
 [fn_1st]
-elog_file: %s/061.php
-elog_line: 33
-=== file 2: json ===
+file: %s/061.php
+line: 33
+=== file 2: to.json ===
 {"message":"dummy\n[fn_1st]\n"}
-=== %s/test.sh: json, fileline ===
+=== %s/test.sh: fileline, to.json ===
 hoge foo
-{"message":"dummy\n[fn_1st]\n","elog_file":"%s/061.php","elog_line":33}
+{"message":"dummy\n[fn_1st]\n","file":"%s/061.php","line":33}
 
 
-[ Test 2 ]
+[ Test 3 ]
 === elog.filter_execute: fn_2nd ===
 fn_2nd
 === elog_get_filter: registers ===
@@ -146,12 +145,11 @@ array(2) {
 === file 1: fileline ===
 dummy
 [fn_1st]
-elog_file: %s/061.php
-elog_line: 33[fn_2nd]
-
-=== file 2: json ===
-{"message":"dummy\n[fn_1st]\n"}[fn_2nd]
-
-=== %s/test.sh: json, fileline ===
+[fn_2nd]
+file: %s/061.php
+line: 33
+=== file 2: to.json ===
+{"message":"dummy\n[fn_1st]\n[fn_2nd]\n"}
+=== %s/test.sh: fileline, to.json ===
 hoge foo
-{"message":"dummy\n[fn_1st]\n","elog_file":"%s/061.php","elog_line":33}[fn_2nd]
+{"message":"dummy\n[fn_1st]\n[fn_2nd]\n","file":"%s/061.php","line":33}

@@ -14,9 +14,6 @@ ini_set('elog.default_destination', $log);
 echo "[ append: elog_filter_add_request ]\n";
 var_dump(elog_append_filter('elog_filter_add_request'));
 
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
-
 echo "[ REQUEST ]\n";
 $_REQUEST = array('test1' => 'TEST-1',
                   'test2' => 'TEST-2');
@@ -30,7 +27,6 @@ function test($val, $out) {
 
     echo "=== output ===\n";
     file_dump($out);
-    echo "\n";
 }
 
 test(true, $log);
@@ -64,8 +60,6 @@ fclose($file);
 --EXPECTF--
 [ append: elog_filter_add_request ]
 bool(true)
-[ append: elog_filter_to_string ]
-bool(true)
 [ REQUEST ]
 array(2) {
   ["test1"]=>
@@ -76,16 +70,16 @@ array(2) {
 [ boolean ]
 bool(true)
 === output ===
-1
-elog_request: {
+true
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
 [ boolean ]
 bool(false)
 === output ===
-0
-elog_request: {
+false
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
@@ -93,7 +87,7 @@ elog_request: {
 int(12345)
 === output ===
 12345
-elog_request: {
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
@@ -101,7 +95,7 @@ elog_request: {
 float(98.765)
 === output ===
 98.765
-elog_request: {
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
@@ -109,15 +103,15 @@ elog_request: {
 string(5) "dummy"
 === output ===
 dummy
-elog_request: {
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
 [ NULL ]
 NULL
 === output ===
-
-elog_request: {
+NULL
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
@@ -131,14 +125,14 @@ array(3) {
   string(1) "c"
 }
 === output ===
-{
-  0: "a"
-  1: "b"
-  2: "c"
-  "elog_request": {
-    "test1": "TEST-1"
-    "test2": "TEST-2"
-  }
+[
+  "a"
+  "b"
+  "c"
+]
+request: {
+  "test1": "TEST-1"
+  "test2": "TEST-2"
 }
 [ array ]
 array(3) {
@@ -154,10 +148,10 @@ array(3) {
   "a": "A"
   "b": "B"
   "c": "C"
-  "elog_request": {
-    "test1": "TEST-1"
-    "test2": "TEST-2"
-  }
+}
+request: {
+  "test1": "TEST-1"
+  "test2": "TEST-2"
 }
 [ array ]
 array(3) {
@@ -173,10 +167,10 @@ array(3) {
   0: "a"
   "b": "B"
   1: "c"
-  "elog_request": {
-    "test1": "TEST-1"
-    "test2": "TEST-2"
-  }
+}
+request: {
+  "test1": "TEST-1"
+  "test2": "TEST-2"
 }
 [ array ]
 array(2) {
@@ -194,18 +188,18 @@ array(2) {
   }
 }
 === output ===
-{
-  0: "a"
-  1: [
+[
+  "a"
+  [
     "b"
     [
       "c"
     ]
   ]
-  "elog_request": {
-    "test1": "TEST-1"
-    "test2": "TEST-2"
-  }
+]
+request: {
+  "test1": "TEST-1"
+  "test2": "TEST-2"
 }
 [ object ]
 object(stdClass)#1 (3) {
@@ -221,10 +215,10 @@ stdClass {
   "a": "A"
   "b": "B"
   "c": "C"
-  "elog_request": {
-    "test1": "TEST-1"
-    "test2": "TEST-2"
-  }
+}
+request: {
+  "test1": "TEST-1"
+  "test2": "TEST-2"
 }
 [ object ]
 object(stdClass)#%d (3) {
@@ -255,16 +249,16 @@ stdClass {
       "z": "Z"
     }
   }
-  "elog_request": {
-    "test1": "TEST-1"
-    "test2": "TEST-2"
-  }
+}
+request: {
+  "test1": "TEST-1"
+  "test2": "TEST-2"
 }
 [ resource ]
-resource(30) of type (stream)
+resource(%d) of type (stream)
 === output ===
 resource of type(stream)
-elog_request: {
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }

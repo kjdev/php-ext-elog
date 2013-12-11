@@ -2,12 +2,12 @@
 elog_filter: system=INI elog.filter_label
 --INI--
 date.timezone=Asia/Tokyo
-elog.filter_label_scalar="msg"
-elog.filter_label_file="file"
-elog.filter_label_line="line"
-elog.filter_label_timestamp="time"
-elog.filter_label_level="level"
-elog.filter_label_request="req"
+elog.filter_label_message="MESSAGE"
+elog.filter_label_file="FILE"
+elog.filter_label_line="LINE"
+elog.filter_label_timestamp="TIME"
+elog.filter_label_level="LEVEL"
+elog.filter_label_request="REQ"
 --SKIPIF--
 --FILE--
 <?php
@@ -18,7 +18,6 @@ $log = dirname(__FILE__) . "/tmp_060.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-elog_append_filter('elog_filter_to_json');
 elog_append_filter('elog_filter_add_fileline');
 elog_append_filter('elog_filter_add_timestamp');
 elog_append_filter('elog_filter_add_level');
@@ -27,15 +26,16 @@ elog_append_filter('elog_filter_add_request');
 $_REQUEST = array('dummy' => 'DUMMY');
 
 function test($out) {
+    ini_set('elog.to', 'json');
     elog('dummy');
     file_dump($out);
     echo "\n";
+    ini_set('elog.to', 'string');
     elog_err(array('dummy'));
     file_dump($out);
-    echo "\n";
 }
 
-$ini = array('elog.filter_label_scalar',
+$ini = array('elog.filter_label_message',
              'elog.filter_label_file',
              'elog.filter_label_line',
              'elog.filter_label_timestamp',
@@ -52,20 +52,22 @@ test($log);
 ?>
 --EXPECTF--
 [ ini ]
-elog.filter_label_scalar --> msg
-elog.filter_label_file --> file
-elog.filter_label_line --> line
-elog.filter_label_timestamp --> time
-elog.filter_label_level --> level
-elog.filter_label_request --> req
+elog.filter_label_message --> MESSAGE
+elog.filter_label_file --> FILE
+elog.filter_label_line --> LINE
+elog.filter_label_timestamp --> TIME
+elog.filter_label_level --> LEVEL
+elog.filter_label_request --> REQ
 
 [ default ]
-{"msg":"dummy","file":"%s/060.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","req":{"dummy":"DUMMY"}}
-["dummy"]
-file: %s/060.php
-line: 21
-time: %d-%s-%d %d:%d:%d Asia/Tokyo
-level: ERR
-req: {
+{"MESSAGE":"dummy","FILE":"%s/060.php","LINE":18,"TIME":"%d-%s-%d %d:%d:%d Asia/Tokyo","REQ":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+FILE: %s/060.php
+LINE: 22
+TIME: %d-%s-%d %d:%d:%d Asia/Tokyo
+LEVEL: ERR
+REQ: {
   "dummy": "DUMMY"
 }

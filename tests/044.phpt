@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_json: ini=elog.filter_json_unicode_escape
+elog to: json: ini=elog.filter_json_unicode_escape
 --INI--
 --SKIPIF--
 --FILE--
@@ -11,8 +11,7 @@ $log = dirname(__FILE__) . "/tmp_044.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-echo "[ append: elog_filter_to_json ]\n";
-var_dump(elog_append_filter('elog_filter_to_json'));
+ini_set('elog.to', 'json');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -42,8 +41,6 @@ test('テスト', $log);
 
 ?>
 --EXPECTF--
-[ append: elog_filter_to_json ]
-bool(true)
 [ string ]
 string(5) "dummy"
 === elog.filter_json_unicode_escape ===

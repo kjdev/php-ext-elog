@@ -8,7 +8,6 @@ require 'test.inc';
 
 
 ini_set('elog.default_type', -1);
-elog_append_filter('elog_filter_add_eol');
 
 elog('test1', -1);
 elog('test2', -1);

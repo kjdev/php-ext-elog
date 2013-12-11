@@ -16,7 +16,11 @@ echo "\n[ append: elog_filter_add_fileline ]\n";
 var_dump(elog_append_filter('elog_filter_add_fileline'));
 
 function fn_1st($val) {
-    return $val . "[" . __FUNCTION__ . "]\n";
+    if (is_scalar($val)) {
+        return $val . "[" . __FUNCTION__ . "]\n";
+    } else {
+        return var_export($val, true) . "[" . __FUNCTION__ . "]\n";
+    }
 }
 
 class Test {
@@ -46,12 +50,6 @@ echo "\n[ Filter : prepend fn_1st ]\n";
 var_dump(elog_register_filter('fn_1st', 'fn_1st'));
 var_dump(elog_prepend_filter('fn_1st'));
 
-echo "\n[ prepend: elog_filter_to_string ]\n";
-var_dump(elog_prepend_filter('elog_filter_to_string'));
-
-echo "\n[ append: elog_filter_add_eol ]\n";
-var_dump(elog_append_filter('elog_filter_add_eol'));
-
 echo "\n[ Filters: enabled ]\n";
 var_dump(elog_get_filter('enabled'));
 
@@ -60,12 +58,10 @@ function test($var, $out) {
     elog($var);
     echo "=== normal ===\n";
     file_dump($out);
-    echo "\n";
 
     elog_err($var);
     echo "=== err ===\n";
     file_dump($out);
-    echo "\n";
 }
 
 echo "\n[ Test 1 ]\n";
@@ -97,28 +93,18 @@ bool(true)
 bool(true)
 bool(true)
 
-[ prepend: elog_filter_to_string ]
-bool(true)
-
-[ append: elog_filter_add_eol ]
-bool(true)
-
 [ Filters: enabled ]
-array(7) {
+array(5) {
   [0]=>
-  string(21) "elog_filter_to_string"
-  [1]=>
   string(6) "fn_1st"
-  [2]=>
+  [1]=>
   string(6) "me_2nd"
-  [3]=>
+  [2]=>
   string(24) "elog_filter_add_fileline"
-  [4]=>
+  [3]=>
   string(9) "st_me_3rd"
-  [5]=>
+  [4]=>
   string(6) "cj_4th"
-  [6]=>
-  string(19) "elog_filter_add_eol"
 }
 
 [ Test 1 ]
@@ -126,17 +112,17 @@ string(5) "dummy"
 === normal ===
 dummy[fn_1st]
 [Test::me_2nd]
-elog_file: %s/055.php
-elog_line: 54[Test::st_me_3rd]
+[Test::st_me_3rd]
 [closure_4th]
-
+file: %s/055.php
+line: 52
 === err ===
 dummy[fn_1st]
 [Test::me_2nd]
-elog_file: %s/055.php
-elog_line: 59[Test::st_me_3rd]
+[Test::st_me_3rd]
 [closure_4th]
-
+file: %s/055.php
+line: 56
 
 [ Test 2 ]
 array(1) {
@@ -144,39 +130,40 @@ array(1) {
   string(5) "dummy"
 }
 === normal ===
-[
-  "dummy"
-][fn_1st]
+array (
+  0 => 'dummy',
+)[fn_1st]
 [Test::me_2nd]
-elog_file: %s/055.php
-elog_line: 54[Test::st_me_3rd]
+[Test::st_me_3rd]
 [closure_4th]
-
+file: %s/055.php
+line: 52
 === err ===
-[
-  "dummy"
-][fn_1st]
+array (
+  0 => 'dummy',
+)[fn_1st]
 [Test::me_2nd]
-elog_file: %s/055.php
-elog_line: 59[Test::st_me_3rd]
+[Test::st_me_3rd]
 [closure_4th]
-
+file: %s/055.php
+line: 56
 
 [ Test 3 ]
-object(stdClass)#3 (0) {
+object(stdClass)#%d (0) {
 }
 === normal ===
-stdClass {
-}[fn_1st]
+stdClass::__set_state(array(
+))[fn_1st]
 [Test::me_2nd]
-elog_file: %s/055.php
-elog_line: 54[Test::st_me_3rd]
+[Test::st_me_3rd]
 [closure_4th]
-
+file: %s/055.php
+line: 52
 === err ===
-stdClass {
-}[fn_1st]
+stdClass::__set_state(array(
+))[fn_1st]
 [Test::me_2nd]
-elog_file: %s/055.php
-elog_line: 59[Test::st_me_3rd]
+[Test::st_me_3rd]
 [closure_4th]
+file: %s/055.php
+line: 56

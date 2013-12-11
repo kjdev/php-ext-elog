@@ -25,11 +25,11 @@ server_finish($pid);
 === http://127.0.0.1:12342 ===
 Method: POST
 Uri: /
-Body: dummy
+Body: message=dummy
 Headers: Array
 (
     [Host] => 127.0.0.1:12342
-    [Content-Length] => 5
+    [Content-Length] => 13
     [Content-Type] => application/x-www-form-urlencoded
 User-Agent: Mozilla/4.0 (Compatible; MSIE 6.0; Windows NT 5.1;)
 Referer: http://xxx.yyy.zzz/index.html

@@ -43,4 +43,5 @@ echo "\n";
 === error_log ===
 dummy-try
 === elog ===
-dummy-trydummy-try
+dummy-try
+dummy-try

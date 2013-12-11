@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_json: ini=elog.filter_json_assoc
+elog to: json: ini=elog.filter_json_assoc
 --INI--
 --SKIPIF--
 --FILE--
@@ -11,8 +11,7 @@ $log = dirname(__FILE__) . "/tmp_070.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-echo "[ append: elog_filter_to_json ]\n";
-var_dump(elog_append_filter('elog_filter_to_json'));
+ini_set('elog.to', 'json');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -41,8 +40,6 @@ test(array('a' => 'A', 'b' => 'B', 'c' => 'C'), $log);
 
 ?>
 --EXPECTF--
-[ append: elog_filter_to_json ]
-bool(true)
 [ array ]
 array(3) {
   [0]=>
@@ -55,7 +52,7 @@ array(3) {
 === elog.filter_json_assoc ===
 Off
 === output ===
-["a","b","c"]
+{"message":["a","b","c"]}
 [ array ]
 array(3) {
   ["a"]=>
@@ -68,7 +65,7 @@ array(3) {
 === elog.filter_json_assoc ===
 Off
 === output ===
-{"a":"A","b":"B","c":"C"}
+{"message":{"a":"A","b":"B","c":"C"}}
 [ array ]
 array(3) {
   [0]=>
@@ -81,7 +78,7 @@ array(3) {
 === elog.filter_json_assoc ===
 On
 === output ===
-{"0":"a","1":"b","2":"c"}
+{"message":{"0":"a","1":"b","2":"c"}}
 [ array ]
 array(3) {
   ["a"]=>
@@ -94,7 +91,7 @@ array(3) {
 === elog.filter_json_assoc ===
 On
 === output ===
-{"a":"A","b":"B","c":"C"}
+{"message":{"a":"A","b":"B","c":"C"}}
 [ array ]
 array(3) {
   [0]=>
@@ -107,7 +104,7 @@ array(3) {
 === elog.filter_json_assoc ===
 Off
 === output ===
-["a","b","c"]
+{"message":["a","b","c"]}
 [ array ]
 array(3) {
   ["a"]=>
@@ -120,4 +117,4 @@ array(3) {
 === elog.filter_json_assoc ===
 Off
 === output ===
-{"a":"A","b":"B","c":"C"}
+{"message":{"a":"A","b":"B","c":"C"}}

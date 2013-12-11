@@ -3,7 +3,7 @@
 #define PHP_ELOG_H
 
 #define ELOG_NAMESPACE "elog"
-#define ELOG_EXT_VERSION "0.1.3"
+#define ELOG_EXT_VERSION "0.2.0"
 
 #define EL_FILTER_APPEND  1
 #define EL_FILTER_PREPEND 2
@@ -19,13 +19,17 @@
 #define EL_LEVEL_DEBUG   7
 #define EL_LEVEL_ALL     256
 
-#define EL_LABEL_SCALAR    "message"
-#define EL_LABEL_FILE      "elog_file"
-#define EL_LABEL_LINE      "elog_line"
-#define EL_LABEL_TIMESTAMP "elog_time"
-#define EL_LABEL_LEVEL     "elog_level"
-#define EL_LABEL_REQUEST   "elog_request"
-#define EL_LABEL_TRACE     "elog_trace"
+#define EL_LABEL_MESSAGE   "message"
+#define EL_LABEL_FILE      "file"
+#define EL_LABEL_LINE      "line"
+#define EL_LABEL_TIMESTAMP "time"
+#define EL_LABEL_LEVEL     "level"
+#define EL_LABEL_REQUEST   "request"
+#define EL_LABEL_TRACE     "trace"
+
+#define EL_TO_STRING "string"
+#define EL_TO_JSON   "json"
+#define EL_TO_HTTP   "http"
 
 extern zend_module_entry elog_module_entry;
 #define phpext_elog_ptr &elog_module_entry
@@ -49,19 +53,20 @@ ZEND_BEGIN_MODULE_GLOBALS(elog)
     long level;
     char *command_output;
     char *timestamp_format;
-    zend_bool array_assoc;
     zend_bool json_unicode_escape;
     zend_bool json_assoc;
     char *http_separator;
     long http_encode;
+    char *to;
     char *exec_filter;
-    char *label_scalar;
+    char *label_message;
     char *label_file;
     char *label_line;
     char *label_timestamp;
     char *label_level;
     char *label_request;
     char *label_trace;
+    zend_bool display_errors;
     zend_bool error_log;
     zend_bool error_handler;
     zend_bool error_handler_origin;

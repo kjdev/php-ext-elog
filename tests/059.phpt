@@ -12,7 +12,6 @@ $log = dirname(__FILE__) . "/tmp_059.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-elog_append_filter('elog_filter_to_json');
 elog_append_filter('elog_filter_add_fileline');
 elog_append_filter('elog_filter_add_timestamp');
 elog_append_filter('elog_filter_add_level');
@@ -21,16 +20,17 @@ elog_append_filter('elog_filter_add_request');
 $_REQUEST = array('dummy' => 'DUMMY');
 
 function test($out) {
+    ini_set('elog.to', 'json');
     elog('dummy');
     file_dump($out);
     echo "\n";
+    ini_set('elog.to', 'string');
     elog_err(array('dummy'));
     file_dump($out);
-    echo "\n";
 }
 
 
-$ini = array('elog.filter_label_scalar',
+$ini = array('elog.filter_label_message',
              'elog.filter_label_file',
              'elog.filter_label_line',
              'elog.filter_label_timestamp',
@@ -45,112 +45,126 @@ foreach ($ini as $val) {
 echo "\n[ default ]\n";
 test($log);
 
-echo "\n[ elog.filter_label_scalar: msg ]\n";
-ini_set('elog.filter_label_scalar', 'msg');
+echo "\n[ elog.filter_label_message: MESSAGE ]\n";
+ini_set('elog.filter_label_message', 'MESSAGE');
 test($log);
 
-echo "\n[ elog.filter_label_file: file ]\n";
-ini_set('elog.filter_label_file', 'file');
+echo "\n[ elog.filter_label_file: FILE ]\n";
+ini_set('elog.filter_label_file', 'FILE');
 test($log);
 
-echo "\n[ elog.filter_label_line: line ]\n";
-ini_set('elog.filter_label_line', 'line');
+echo "\n[ elog.filter_label_line: LINE ]\n";
+ini_set('elog.filter_label_line', 'LINE');
 test($log);
 
-echo "\n[ elog.filter_label_timestamp: time ]\n";
-ini_set('elog.filter_label_timestamp', 'time');
+echo "\n[ elog.filter_label_timestamp: TIME ]\n";
+ini_set('elog.filter_label_timestamp', 'TIME');
 test($log);
 
-echo "\n[ elog.filter_label_level: level ]\n";
-ini_set('elog.filter_label_level', 'level');
+echo "\n[ elog.filter_label_level: LEVEL ]\n";
+ini_set('elog.filter_label_level', 'LEVEL');
 test($log);
 
-echo "\n[ elog.filter_label_request: req ]\n";
-ini_set('elog.filter_label_request', 'req');
+echo "\n[ elog.filter_label_request: REQ ]\n";
+ini_set('elog.filter_label_request', 'REQ');
 test($log);
 ?>
 --EXPECTF--
 [ ini ]
-elog.filter_label_scalar --> message
-elog.filter_label_file --> elog_file
-elog.filter_label_line --> elog_line
-elog.filter_label_timestamp --> elog_time
-elog.filter_label_level --> elog_level
-elog.filter_label_request --> elog_request
+elog.filter_label_message --> message
+elog.filter_label_file --> file
+elog.filter_label_line --> line
+elog.filter_label_timestamp --> time
+elog.filter_label_level --> level
+elog.filter_label_request --> request
 
 [ default ]
-{"message":"dummy","elog_file":"%s/059.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/059.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
-  "dummy": "DUMMY"
-}
-
-[ elog.filter_label_scalar: msg ]
-{"msg":"dummy","elog_file":"%s/059.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/059.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
-  "dummy": "DUMMY"
-}
-
-[ elog.filter_label_file: file ]
-{"msg":"dummy","file":"%s/059.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
+{"message":"dummy","file":"%s/059.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
 file: %s/059.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
-  "dummy": "DUMMY"
-}
-
-[ elog.filter_label_line: line ]
-{"msg":"dummy","file":"%s/059.php","line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-file: %s/059.php
-line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
-  "dummy": "DUMMY"
-}
-
-[ elog.filter_label_timestamp: time ]
-{"msg":"dummy","file":"%s/059.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-file: %s/059.php
-line: 21
-time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
-  "dummy": "DUMMY"
-}
-
-[ elog.filter_label_level: level ]
-{"msg":"dummy","file":"%s/059.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-file: %s/059.php
-line: 21
+line: 22
 time: %d-%s-%d %d:%d:%d Asia/Tokyo
 level: ERR
-elog_request: {
+request: {
   "dummy": "DUMMY"
 }
 
-[ elog.filter_label_request: req ]
-{"msg":"dummy","file":"%s/059.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","req":{"dummy":"DUMMY"}}
-["dummy"]
+[ elog.filter_label_message: MESSAGE ]
+{"MESSAGE":"dummy","file":"%s/059.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
 file: %s/059.php
-line: 21
+line: 22
 time: %d-%s-%d %d:%d:%d Asia/Tokyo
 level: ERR
-req: {
+request: {
+  "dummy": "DUMMY"
+}
+
+[ elog.filter_label_file: FILE ]
+{"MESSAGE":"dummy","FILE":"%s/059.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+FILE: %s/059.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
+  "dummy": "DUMMY"
+}
+
+[ elog.filter_label_line: LINE ]
+{"MESSAGE":"dummy","FILE":"%s/059.php","LINE":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+FILE: %s/059.php
+LINE: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
+  "dummy": "DUMMY"
+}
+
+[ elog.filter_label_timestamp: TIME ]
+{"MESSAGE":"dummy","FILE":"%s/059.php","LINE":18,"TIME":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+FILE: %s/059.php
+LINE: 22
+TIME: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
+  "dummy": "DUMMY"
+}
+
+[ elog.filter_label_level: LEVEL ]
+{"MESSAGE":"dummy","FILE":"%s/059.php","LINE":18,"TIME":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+FILE: %s/059.php
+LINE: 22
+TIME: %d-%s-%d %d:%d:%d Asia/Tokyo
+LEVEL: ERR
+request: {
+  "dummy": "DUMMY"
+}
+
+[ elog.filter_label_request: REQ ]
+{"MESSAGE":"dummy","FILE":"%s/059.php","LINE":18,"TIME":"%d-%s-%d %d:%d:%d Asia/Tokyo","REQ":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+FILE: %s/059.php
+LINE: 22
+TIME: %d-%s-%d %d:%d:%d Asia/Tokyo
+LEVEL: ERR
+REQ: {
   "dummy": "DUMMY"
 }

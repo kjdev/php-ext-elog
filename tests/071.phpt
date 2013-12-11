@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_json: array
+elog to: json: array
 --INI--
 --SKIPIF--
 --FILE--
@@ -12,8 +12,7 @@ ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
 
-echo "[ append: elog_filter_to_json ]\n";
-var_dump(elog_append_filter('elog_filter_to_json'));
+ini_set('elog.to', 'json');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -54,50 +53,48 @@ test(array($file), $log);
 fclose($file);
 ?>
 --EXPECTF--
-[ append: elog_filter_to_json ]
-bool(true)
 [ array ]
 array(1) {
   [0]=>
   bool(true)
 }
 === output ===
-[true]
+{"message":[true]}
 [ array ]
 array(1) {
   [0]=>
   bool(false)
 }
 === output ===
-[false]
+{"message":[false]}
 [ array ]
 array(1) {
   [0]=>
   int(12345)
 }
 === output ===
-[12345]
+{"message":[12345]}
 [ array ]
 array(1) {
   [0]=>
   float(98.765)
 }
 === output ===
-[98.765%d]
+{"message":[98.765%d]}
 [ array ]
 array(1) {
   [0]=>
   string(5) "dummy"
 }
 === output ===
-["dummy"]
+{"message":["dummy"]}
 [ array ]
 array(1) {
   [0]=>
   NULL
 }
 === output ===
-[null]
+{"message":[null]}
 [ array ]
 array(1) {
   [0]=>
@@ -111,7 +108,7 @@ array(1) {
   }
 }
 === output ===
-[["a","b","c"]]
+{"message":[["a","b","c"]]}
 [ array ]
 array(1) {
   [0]=>
@@ -125,7 +122,7 @@ array(1) {
   }
 }
 === output ===
-[{"a":"A","b":"B","c":"C"}]
+{"message":[{"a":"A","b":"B","c":"C"}]}
 [ array ]
 array(1) {
   [0]=>
@@ -139,7 +136,7 @@ array(1) {
   }
 }
 === output ===
-[{"0":"a","b":"B","1":"c"}]
+{"message":[{"0":"a","b":"B","1":"c"}]}
 [ array ]
 array(1) {
   [0]=>
@@ -159,7 +156,7 @@ array(1) {
   }
 }
 === output ===
-[["a",["b",["c"]]]]
+{"message":[["a",["b",["c"]]]]}
 [ array ]
 array(1) {
   [0]=>
@@ -173,7 +170,7 @@ array(1) {
   }
 }
 === output ===
-[{"a":"A","b":"B","c":"C"}]
+{"message":[{"a":"A","b":"B","c":"C"}]}
 [ array ]
 array(1) {
   [0]=>
@@ -196,13 +193,13 @@ array(1) {
   }
 }
 === output ===
-[{"a":"A","b":{"x":"X"},"c":{"y":{"z":"Z"}}}]
+{"message":[{"a":"A","b":{"x":"X"},"c":{"y":{"z":"Z"}}}]}
 [ array ]
 array(1) {
   [0]=>
   resource(%d) of type (stream)
 }
 
-Warning: elog_filter_to_json(): Type is not supported in %s on line %d
+Warning: elog(): Type is not supported in %s on line %d
 === output ===
-[null]
+{"message":[null]}

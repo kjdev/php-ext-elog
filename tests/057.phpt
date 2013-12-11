@@ -25,7 +25,6 @@ function test($out) {
     echo "=== output ===\n";
     elog('dummy');
     file_dump($out);
-    echo "\n";
 }
 
 echo "\n[ Test 1 ]\n";
@@ -65,7 +64,6 @@ fn_1st
 === output ===
 dummy[fn_1st]
 
-
 [ Test 3 ]
 bool(true)
 === elog_get_filter ===
@@ -77,7 +75,6 @@ array(1) {
 fn_1st
 === output ===
 dummy[fn_1st]
-
 
 [ Test 4 ]
 === elog_get_filter ===

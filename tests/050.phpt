@@ -14,16 +14,12 @@ ini_set('elog.default_destination', $log);
 echo "[ append: elog_filter_add_request ]\n";
 var_dump(elog_append_filter('elog_filter_add_request'));
 
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
-
 function test($out) {
     var_dump($_REQUEST);
     elog('dummy');
     echo "=== output ===\n";
     $buf = '';
     file_dump($out, $buf);
-    echo "\n";
 }
 
 echo "\n[ Test 1 ]\n";
@@ -45,8 +41,6 @@ test($log);
 --EXPECTF--
 [ append: elog_filter_add_request ]
 bool(true)
-[ append: elog_filter_to_string ]
-bool(true)
 
 [ Test 1 ]
 array(1) {
@@ -55,7 +49,7 @@ array(1) {
 }
 === output ===
 dummy
-elog_request: {
+request: {
   "test1": "TEST-1"
 }
 
@@ -68,7 +62,7 @@ array(2) {
 }
 === output ===
 dummy
-elog_request: {
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
 }
@@ -87,7 +81,7 @@ array(3) {
 }
 === output ===
 dummy
-elog_request: {
+request: {
   "test1": "TEST-1"
   "test2": "TEST-2"
   0: {

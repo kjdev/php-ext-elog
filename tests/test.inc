@@ -6,6 +6,9 @@ function tcp_server_skipif($connect) {
     if (!function_exists('posix_kill')) {
         die('skip posix_kill() not available');
     }
+    if (!function_exists('socket_create')) {
+        die('skip socket_create() not available');
+    }
     /*
     if (!stream_socket_server($connect)) {
         die('skip stream_socket_server() failed');

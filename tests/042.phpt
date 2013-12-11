@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_string
+elog to: string
 --INI--
 --SKIPIF--
 --FILE--
@@ -11,9 +11,7 @@ $log = dirname(__FILE__) . "/tmp_042.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
+ini_set('elog.to', 'string');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -22,7 +20,6 @@ function test($val, $out) {
 
     echo "=== output ===\n";
     file_dump($out);
-    echo "\n";
 }
 
 test(true, $log);
@@ -54,8 +51,6 @@ test($file, $log);
 fclose($file);
 ?>
 --EXPECTF--
-[ append: elog_filter_to_string ]
-bool(true)
 [ boolean ]
 bool(true)
 === output ===

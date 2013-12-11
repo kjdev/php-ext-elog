@@ -47,25 +47,17 @@ var_dump(elog_get_filter());
 === Filter default ===
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(0) {
@@ -81,25 +73,17 @@ array(4) {
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(1) {
@@ -118,25 +102,17 @@ bool(true)
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(3) {
@@ -158,25 +134,17 @@ array(4) {
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {

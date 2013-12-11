@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_http_query: types
+elog to: http: types
 --INI--
 --SKIPIF--
 --FILE--
@@ -11,8 +11,7 @@ $log = dirname(__FILE__) . "/tmp_073.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-echo "[ append: elog_filter_to_http_query ]\n";
-var_dump(elog_append_filter('elog_filter_to_http_query'));
+ini_set('elog.to', 'http');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -53,8 +52,6 @@ test($file, $log);
 fclose($file);
 ?>
 --EXPECTF--
-[ append: elog_filter_to_http_query ]
-bool(true)
 [ boolean ]
 bool(true)
 === output ===
@@ -89,7 +86,7 @@ array(3) {
   string(1) "c"
 }
 === output ===
-0=a&1=b&2=c
+message%5B0%5D=a&message%5B1%5D=b&message%5B2%5D=c
 [ array ]
 array(3) {
   ["a"]=>
@@ -100,7 +97,7 @@ array(3) {
   string(1) "C"
 }
 === output ===
-a=A&b=B&c=C
+message%5Ba%5D=A&message%5Bb%5D=B&message%5Bc%5D=C
 [ array ]
 array(3) {
   [0]=>
@@ -111,7 +108,7 @@ array(3) {
   string(1) "c"
 }
 === output ===
-0=a&b=B&1=c
+message%5B0%5D=a&message%5Bb%5D=B&message%5B1%5D=c
 [ array ]
 array(2) {
   [0]=>
@@ -128,7 +125,7 @@ array(2) {
   }
 }
 === output ===
-0=a&1%5B0%5D=b&1%5B1%5D%5B0%5D=c
+message%5B0%5D=a&message%5B1%5D%5B0%5D=b&message%5B1%5D%5B1%5D%5B0%5D=c
 [ object ]
 object(stdClass)#%d (3) {
   ["a"]=>
@@ -139,7 +136,7 @@ object(stdClass)#%d (3) {
   string(1) "C"
 }
 === output ===
-a=A&b=B&c=C
+message%5Ba%5D=A&message%5Bb%5D=B&message%5Bc%5D=C
 [ object ]
 object(stdClass)#%d (3) {
   ["a"]=>
@@ -159,7 +156,7 @@ object(stdClass)#%d (3) {
   }
 }
 === output ===
-a=A&b%5Bx%5D=X&c%5By%5D%5Bz%5D=Z
+message%5Ba%5D=A&message%5Bb%5D%5Bx%5D=X&message%5Bc%5D%5By%5D%5Bz%5D=Z
 [ resource ]
-resource(30) of type (stream)
+resource(%d) of type (stream)
 === output ===

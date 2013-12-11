@@ -28,7 +28,6 @@ function test($out) {
     echo "=== output ===\n";
     elog('dummy');
     file_dump($out);
-    echo "\n";
 }
 
 echo "\n[ Test 1 ]\n";
@@ -39,7 +38,7 @@ echo "filter register: fn_1st(fn_2nd)\n";
 var_dump(elog_register_filter('fn_1st', 'fn_2nd'));
 test($log);
 
-echo "\n[ Test 2 ]\n";
+echo "\n[ Test 3 ]\n";
 echo "filter register: 2nd\n";
 var_dump(elog_register_filter('2nd', 'fn_2nd'));
 test($log);
@@ -59,10 +58,9 @@ array(3) {
 === elog.filter_execute ===
 elog_filter_add_fileline,fn_1st,2nd
 === output ===
-dummy
-elog_file: %s/058.php
-elog_line: 23[fn_1st]
-
+dummy[fn_1st]
+file: %s/058.php
+line: 23
 
 [ Test 2 ]
 filter register: fn_1st(fn_2nd)
@@ -79,12 +77,11 @@ array(3) {
 === elog.filter_execute ===
 elog_filter_add_fileline,fn_1st,2nd
 === output ===
-dummy
-elog_file: %s/058.php
-elog_line: 23[fn_2nd]
+dummy[fn_2nd]
+file: %s/058.php
+line: 23
 
-
-[ Test 2 ]
+[ Test 3 ]
 filter register: 2nd
 bool(true)
 === elog_get_filter ===
@@ -99,7 +96,7 @@ array(3) {
 === elog.filter_execute ===
 elog_filter_add_fileline,fn_1st,2nd
 === output ===
-dummy
-elog_file: %s/058.php
-elog_line: 23[fn_2nd]
+dummy[fn_2nd]
 [fn_2nd]
+file: %s/058.php
+line: 23

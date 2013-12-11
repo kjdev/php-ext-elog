@@ -37,15 +37,17 @@ bool(true)
 [ Test 1 ]
 === output ===
 dummy
-elog_file: %s/046.php
-elog_line: 13
+file: %s/046.php
+line: 13
+
 [ Test 2 ]
 === output ===
-1
-elog_file: %s/046.php
-elog_line: 18
+true
+file: %s/046.php
+line: 18
+
 [ Test 3 ]
 === output ===
 12345
-elog_file: %s/046.php
-elog_line: 23
+file: %s/046.php
+line: 23

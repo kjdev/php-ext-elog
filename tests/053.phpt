@@ -14,12 +14,6 @@ ini_set('elog.default_destination', $log);
 echo "[ append: elog_filter_add_level ]\n";
 var_dump(elog_append_filter('elog_filter_add_level'));
 
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
-
-echo "[ append: elog_filter_add_eol ]\n";
-var_dump(elog_append_filter('elog_filter_add_eol'));
-
 function test($var, $out) {
     elog($var);
     echo "=== normal ===\n";
@@ -79,10 +73,6 @@ test($var, $log);
 --EXPECTF--
 [ append: elog_filter_add_level ]
 bool(true)
-[ append: elog_filter_to_string ]
-bool(true)
-[ append: elog_filter_add_eol ]
-bool(true)
 
 [ Array ]
 === normal ===
@@ -90,45 +80,45 @@ bool(true)
   "dummy"
 ]
 === emerg ===
-{
-  0: "dummy"
-  "elog_level": "EMERGE"
-}
+[
+  "dummy"
+]
+level: EMERGE
 === alert ===
-{
-  0: "dummy"
-  "elog_level": "ALERT"
-}
+[
+  "dummy"
+]
+level: ALERT
 === crit ===
-{
-  0: "dummy"
-  "elog_level": "CRIT"
-}
+[
+  "dummy"
+]
+level: CRIT
 === err ===
-{
-  0: "dummy"
-  "elog_level": "ERR"
-}
+[
+  "dummy"
+]
+level: ERR
 === warning ===
-{
-  0: "dummy"
-  "elog_level": "WARNING"
-}
+[
+  "dummy"
+]
+level: WARNING
 === notice ===
-{
-  0: "dummy"
-  "elog_level": "NOTICE"
-}
+[
+  "dummy"
+]
+level: NOTICE
 === info ===
-{
-  0: "dummy"
-  "elog_level": "INFO"
-}
+[
+  "dummy"
+]
+level: INFO
 === debug ===
-{
-  0: "dummy"
-  "elog_level": "DEBUG"
-}
+[
+  "dummy"
+]
+level: DEBUG
 
 [ Array 2 ]
 elog.level: alert
@@ -139,13 +129,13 @@ elog.level: alert
 === emerg ===
 {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
 }
+level: EMERGE
 === alert ===
 {
   "dummy": "DUMMY"
-  "elog_level": "ALERT"
 }
+level: ALERT
 === crit ===
 === err ===
 === warning ===
@@ -162,32 +152,32 @@ stdClass {
 === emerg ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "EMERGE"
 }
+level: EMERGE
 === alert ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "ALERT"
 }
+level: ALERT
 === crit ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "CRIT"
 }
+level: CRIT
 === err ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "ERR"
 }
+level: ERR
 === warning ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "WARNING"
 }
+level: WARNING
 === notice ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_level": "NOTICE"
 }
+level: NOTICE
 === info ===
 === debug ===

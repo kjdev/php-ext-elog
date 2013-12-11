@@ -19,19 +19,16 @@ echo "\n[ default ]\n";
 elog('dummy');
 echo "=== output ===\n";
 file_dump($log);
-echo "\n";
 
 echo "\n[ boolean ]\n";
 elog(true);
 echo "=== output ===\n";
 file_dump($log);
-echo "\n";
 
 echo "\n[ integer ]\n";
 elog(12345);
 echo "=== output ===\n";
 file_dump($log);
-echo "\n";
 
 function test($format, $out) {
     echo "\n[ elog.filter_timestamp_format: $format ]\n";
@@ -40,12 +37,11 @@ function test($format, $out) {
     echo "=== output ===\n";
     $buf = '';
     file_dump($out, $buf);
-    echo "\n";
 
     foreach (explode(PHP_EOL, $buf) as $line) {
-        $pos = stripos($line, 'elog_time:');
+        $pos = stripos($line, 'time:');
         if ($pos !== false) {
-            $time = trim(substr($line, $pos+10));
+            $time = trim(substr($line, $pos+6));
             if (strcmp(date($format), $time) == 0) {
                 echo "TimeFormat: OK\n";
             }
@@ -72,74 +68,74 @@ bool(true)
 [ default ]
 === output ===
 dummy
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
 
 [ boolean ]
 === output ===
-1
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
+true
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
 
 [ integer ]
 === output ===
 12345
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
 
 [ elog.filter_timestamp_format: F j, Y, g:i a ]
 === output ===
 dummy
-elog_time: %s %d, %d, %d:%d %s
+time: %s %d, %d, %d:%d %s
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: m.d.y ]
 === output ===
 dummy
-elog_time: %d.%d.%d
+time: %d.%d.%d
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: j, n, Y ]
 === output ===
 dummy
-elog_time: %d, %d, %d
+time: %d, %d, %d
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: Ymd ]
 === output ===
 dummy
-elog_time: %d
+time: %d
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: h-i, j-m-y, it is w Day ]
 === output ===
 dummy
-elog_time: %d-%d, %d-%d-%d, %d %d %d %s
+time: %d-%d, %d-%d-%d, %d %d %d %s
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: \i\t \i\s \t\h\e jS \d\a\y. ]
 === output ===
 dummy
-elog_time: it is the %s day.
+time: it is the %s day.
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: D M j G:i T Y ]
 === output ===
 dummy
-elog_time: %s %s %d %d:%d %s %d
+time: %s %s %d %d:%d %s %d
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: H:m \m \i\s\ \m\o\n\t\h ]
 === output ===
 dummy
-elog_time: %d:%d m is month
+time: %d:%d m is month
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: H:i ]
 === output ===
 dummy
-elog_time: %d:%d
+time: %d:%d
 TimeFormat: OK
 
 [ elog.filter_timestamp_format: Y-m-d H:i ]
 === output ===
 dummy
-elog_time: %d-%d-%d %d:%d
+time: %d-%d-%d %d:%d
 TimeFormat: OK

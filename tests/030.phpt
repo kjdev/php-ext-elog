@@ -26,8 +26,8 @@ elog_register_filter('static_method_filter', 'Test::foo');
 elog_register_filter('closure_filter', function($val) { return $val; });
 var_dump(elog_get_filter());
 
-echo "=== Filter prepend: elog_filter_to_string ===\n";
-var_dump(elog_prepend_filter("elog_filter_to_string"));
+echo "=== Filter prepend: elog_filter_add_fileline ===\n";
+var_dump(elog_prepend_filter("elog_filter_add_fileline"));
 var_dump(elog_get_filter());
 
 echo "=== Filter prepend: function_filter ===\n";
@@ -42,8 +42,8 @@ echo "=== Filter prepend: closure_filter ===\n";
 var_dump(elog_prepend_filter("closure_filter"));
 var_dump(elog_get_filter());
 
-echo "=== Filter prepend: duplicate elog_filter_to_string ===\n";
-var_dump(elog_prepend_filter("elog_filter_to_string"));
+echo "=== Filter prepend: duplicate elog_filter_add_fileline ===\n";
+var_dump(elog_prepend_filter("elog_filter_add_fileline"));
 var_dump(elog_get_filter());
 
 ?>
@@ -51,25 +51,17 @@ var_dump(elog_get_filter());
 === Filter register ===
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {
@@ -89,29 +81,21 @@ array(4) {
   array(0) {
   }
 }
-=== Filter prepend: elog_filter_to_string ===
+=== Filter prepend: elog_filter_add_fileline ===
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {
@@ -130,32 +114,24 @@ array(4) {
   ["enabled"]=>
   array(1) {
     [0]=>
-    string(21) "elog_filter_to_string"
+    string(24) "elog_filter_add_fileline"
   }
 }
 === Filter prepend: function_filter ===
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {
@@ -176,32 +152,24 @@ array(4) {
     [0]=>
     string(15) "function_filter"
     [1]=>
-    string(21) "elog_filter_to_string"
+    string(24) "elog_filter_add_fileline"
   }
 }
 === Filter prepend: method_filter ===
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {
@@ -224,32 +192,24 @@ array(4) {
     [1]=>
     string(15) "function_filter"
     [2]=>
-    string(21) "elog_filter_to_string"
+    string(24) "elog_filter_add_fileline"
   }
 }
 === Filter prepend: closure_filter ===
 bool(true)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {
@@ -274,34 +234,26 @@ array(4) {
     [2]=>
     string(15) "function_filter"
     [3]=>
-    string(21) "elog_filter_to_string"
+    string(24) "elog_filter_add_fileline"
   }
 }
-=== Filter prepend: duplicate elog_filter_to_string ===
+=== Filter prepend: duplicate elog_filter_add_fileline ===
 
-Warning: elog_prepend_filter(): Already exists filter "elog_filter_to_string" in %s on line %d
+Warning: elog_prepend_filter(): Already exists filter "elog_filter_add_fileline" in %s on line %d
 bool(false)
 array(4) {
   ["builtin"]=>
-  array(9) {
+  array(5) {
     [0]=>
-    string(21) "elog_filter_to_string"
-    [1]=>
-    string(19) "elog_filter_to_json"
-    [2]=>
-    string(25) "elog_filter_to_http_query"
-    [3]=>
-    string(20) "elog_filter_to_array"
-    [4]=>
-    string(19) "elog_filter_add_eol"
-    [5]=>
     string(24) "elog_filter_add_fileline"
-    [6]=>
+    [1]=>
     string(25) "elog_filter_add_timestamp"
-    [7]=>
+    [2]=>
     string(23) "elog_filter_add_request"
-    [8]=>
+    [3]=>
     string(21) "elog_filter_add_level"
+    [4]=>
+    string(21) "elog_filter_add_trace"
   }
   ["registers"]=>
   array(4) {
@@ -326,6 +278,6 @@ array(4) {
     [2]=>
     string(15) "function_filter"
     [3]=>
-    string(21) "elog_filter_to_string"
+    string(24) "elog_filter_add_fileline"
   }
 }

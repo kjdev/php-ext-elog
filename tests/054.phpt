@@ -1,5 +1,5 @@
 --TEST--
-elog_filter: to_json and add_fileline,add_timestamp,add_level
+elog_filter: to=json and add_fileline,add_timestamp,add_level
 --INI--
 date.timezone=Asia/Tokyo
 --SKIPIF--
@@ -12,8 +12,7 @@ $log = dirname(__FILE__) . "/tmp_054.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-echo "[ append: elog_filter_to_json ]\n";
-var_dump(elog_append_filter('elog_filter_to_json'));
+ini_set('elog.to', 'json');
 
 function test($out) {
     elog('dummy');
@@ -43,8 +42,6 @@ test($log);
 
 ?>
 --EXPECTF--
-[ append: elog_filter_to_json ]
-bool(true)
 === normal ===
 {"message":"dummy"}
 === err ===
@@ -53,20 +50,20 @@ bool(true)
 [ append: elog_filter_add_fileline ]
 bool(true)
 === normal ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":13}
+{"message":"dummy","file":"%s/054.php","line":12}
 === err ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":18}
+{"message":"dummy","file":"%s/054.php","line":17}
 
 [ append: elog_filter_add_timestamp ]
 bool(true)
 === normal ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":13,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
+{"message":"dummy","file":"%s/054.php","line":12,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
 === err ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
+{"message":"dummy","file":"%s/054.php","line":17,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
 
 [ append: elog_filter_add_level ]
 bool(true)
 === normal ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":13,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
+{"message":"dummy","file":"%s/054.php","line":12,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo"}
 === err ===
-{"message":"dummy","elog_file":"%s/054.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_level":"ERR"}
+{"message":"dummy","file":"%s/054.php","line":17,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","level":"ERR"}

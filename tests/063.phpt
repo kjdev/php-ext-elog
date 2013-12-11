@@ -35,10 +35,10 @@ var_dump(elog_get_filter('enabled'));
 elog_append_filter('elog_filter_add_fileline');
 test($log_1, $log_2);
 
-echo "[ append: elog_filter_to_json ]\n";
+echo "[ to: json ]\n";
 echo "[ execute: elog_filter_add_fileline ]\n";
 elog_remove_filter('elog_filter_add_fileline');
-elog_append_filter('elog_filter_to_json');
+ini_set('elog.to', 'json');
 ini_set('elog.filter_execute', 'elog_filter_add_fileline');
 var_dump(elog_get_filter('enabled'));
 
@@ -52,6 +52,7 @@ Notice: Undefined variable: aa in %s/063.php on line 9
 
 === elog ===
 PHP Notice:  Undefined variable: aa in %s/063.php on line 9
+
 [ append: elog_filter_add_fileline ]
 array(0) {
 }
@@ -62,14 +63,13 @@ Notice: Undefined variable: aa in %s/063.php on line 9
 
 === elog ===
 PHP Notice:  Undefined variable: aa in %s/063.php on line 9
-elog_file: %s/063.php
-elog_line: 9
-[ append: elog_filter_to_json ]
+file: %s/063.php
+line: 9
+
+[ to: json ]
 [ execute: elog_filter_add_fileline ]
-array(2) {
+array(1) {
   [0]=>
-  string(19) "elog_filter_to_json"
-  [1]=>
   string(24) "elog_filter_add_fileline"
 }
 
@@ -78,4 +78,4 @@ Notice: Undefined variable: aa in %s/063.php on line 9
 [%s Asia/Tokyo] PHP Notice:  Undefined variable: aa in %s/063.php on line 9
 
 === elog ===
-{"message":"PHP Notice:  Undefined variable: aa in %s/063.php on line 9","elog_file":"%s/063.php","elog_line":9}
+{"message":"PHP Notice:  Undefined variable: aa in %s/063.php on line 9","file":"%s/063.php","line":9}

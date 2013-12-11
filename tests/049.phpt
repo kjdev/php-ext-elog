@@ -15,21 +15,17 @@ ini_set('elog.default_destination', $log);
 echo "[ append: elog_filter_add_timestamp ]\n";
 var_dump(elog_append_filter('elog_filter_add_timestamp'));
 
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
-
 function test($format, $var, $out) {
     ini_set('elog.filter_timestamp_format', $format);
     elog($var);
     echo "=== output ===\n";
     $buf = '';
     file_dump($out, $buf);
-    echo "\n";
 
     foreach (explode(PHP_EOL, $buf) as $line) {
-        $pos = stripos($line, 'elog_time');
+        $pos = stripos($line, 'time:');
         if ($pos !== false) {
-            $time = trim(substr($line, $pos+11));
+            $time = trim(substr($line, $pos+6));
             $time = str_replace('"', '', $time);
             if (strcmp(date($format), $time) == 0) {
                 echo "TimeFormat: OK\n";
@@ -57,29 +53,27 @@ test('Y-m-d H:i', $var, $log);
 --EXPECTF--
 [ append: elog_filter_add_timestamp ]
 bool(true)
-[ append: elog_filter_to_string ]
-bool(true)
 
 [ Array ]
 === output ===
-{
-  0: "dummy"
-  "elog_time": "%d-%d-%d %d:%d"
-}
+[
+  "dummy"
+]
+time: %d-%d-%d %d:%d
 TimeFormat: OK
 
 [ Array ]
 === output ===
 {
   "dummy": "DUMMY"
-  "elog_time": "%d-%d-%d %d:%d"
 }
+time: %d-%d-%d %d:%d
 TimeFormat: OK
 
 [ Object ]
 === output ===
 stdClass {
   "dummy": "DUMMY"
-  "elog_time": "%d-%d-%d %d:%d"
 }
+time: %d-%d-%d %d:%d
 TimeFormat: OK

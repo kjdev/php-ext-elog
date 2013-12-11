@@ -12,7 +12,6 @@ $log = dirname(__FILE__) . "/tmp_076.log";
 ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
-elog_append_filter('elog_filter_to_json');
 elog_append_filter('elog_filter_add_fileline');
 elog_append_filter('elog_filter_add_timestamp');
 elog_append_filter('elog_filter_add_level');
@@ -21,16 +20,17 @@ elog_append_filter('elog_filter_add_request');
 $_REQUEST = array('dummy' => 'DUMMY');
 
 function test($out) {
+    ini_set('elog.to', 'json');
     elog('dummy');
     file_dump($out);
     echo "\n";
+    ini_set('elog.to', 'string');
     elog_err(array('dummy'));
     file_dump($out);
-    echo "\n";
 }
 
 
-$ini = array('elog.filter_label_scalar',
+$ini = array('elog.filter_label_message',
              'elog.filter_label_file',
              'elog.filter_label_line',
              'elog.filter_label_timestamp',
@@ -45,8 +45,8 @@ foreach ($ini as $val) {
 echo "\n[ default ]\n";
 test($log);
 
-echo "\n[ elog.filter_label_scalar: '' ]\n";
-ini_set('elog.filter_label_scalar', '');
+echo "\n[ elog.filter_label_message: '' ]\n";
+ini_set('elog.filter_label_message', '');
 test($log);
 
 echo "\n[ elog.filter_label_file: '' ]\n";
@@ -71,86 +71,100 @@ test($log);
 ?>
 --EXPECTF--
 [ ini ]
-elog.filter_label_scalar --> message
-elog.filter_label_file --> elog_file
-elog.filter_label_line --> elog_line
-elog.filter_label_timestamp --> elog_time
-elog.filter_label_level --> elog_level
-elog.filter_label_request --> elog_request
+elog.filter_label_message --> message
+elog.filter_label_file --> file
+elog.filter_label_line --> line
+elog.filter_label_timestamp --> time
+elog.filter_label_level --> level
+elog.filter_label_request --> request
 
 [ default ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }
 
-[ elog.filter_label_scalar: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+[ elog.filter_label_message: '' ]
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }
 
 [ elog.filter_label_file: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }
 
 [ elog.filter_label_line: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }
 
 [ elog.filter_label_timestamp: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }
 
 [ elog.filter_label_level: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }
 
 [ elog.filter_label_request: '' ]
-{"message":"dummy","elog_file":"%s/076.php","elog_line":18,"elog_time":"%d-%s-%d %d:%d:%d Asia/Tokyo","elog_request":{"dummy":"DUMMY"}}
-["dummy"]
-elog_file: %s/076.php
-elog_line: 21
-elog_time: %d-%s-%d %d:%d:%d Asia/Tokyo
-elog_level: ERR
-elog_request: {
+{"message":"dummy","file":"%s/076.php","line":18,"time":"%d-%s-%d %d:%d:%d Asia/Tokyo","request":{"dummy":"DUMMY"}}
+[
+  "dummy"
+]
+file: %s/076.php
+line: 22
+time: %d-%s-%d %d:%d:%d Asia/Tokyo
+level: ERR
+request: {
   "dummy": "DUMMY"
 }

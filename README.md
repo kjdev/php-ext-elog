@@ -43,18 +43,18 @@ elog.ini:
  elog.command\_output                | NULL            | PHP\_INI\_ALL
  elog.level                          | NULL            | PHP\_INI\_ALL
  elog.filter\_execute                | NULL            | PHP\_INI\_ALL
- elog.filter\_array\_assoc           | "Off"           | PHP\_INI\_ALL
  elog.filter\_json\_unicode\_escape  | "On"            | PHP\_INI\_ALL
  elog.filter\_json\_assoc            | "Off"           | PHP\_INI\_ALL
  elog.filter\_http\_separator        | NULL            | PHP\_INI\_ALL
  elog.filter\_http\_encode           | "0"             | PHP\_INI\_ALL
  elog.filter\_timestamp\_format      | NULL            | PHP\_INI\_ALL
- elog.filter\_label\_scalar          | "message"       | PHP\_INI\_ALL
- elog.filter\_label\_file            | "elog\_file"    | PHP\_INI\_ALL
- elog.filter\_label\_line            | "elog\_line"    | PHP\_INI\_ALL
- elog.filter\_label\_timestamp       | "elog\_time"    | PHP\_INI\_ALL
- elog.filter\_label\_level           | "elog\_level"   | PHP\_INI\_ALL
- elog.filter\_label\_request         | "elog\_request" | PHP\_INI\_ALL
+ elog.filter\_label\_message         | "message"       | PHP\_INI\_ALL
+ elog.filter\_label\_file            | "file"          | PHP\_INI\_ALL
+ elog.filter\_label\_line            | "line"          | PHP\_INI\_ALL
+ elog.filter\_label\_timestamp       | "time"          | PHP\_INI\_ALL
+ elog.filter\_label\_level           | "level"         | PHP\_INI\_ALL
+ elog.filter\_label\_request         | "request"       | PHP\_INI\_ALL
+ elog.filter\_label\_trace           | "trace"         | PHP\_INI\_ALL
  elog.override\_error\_log           | "Off"           | PHP\_INI\_SYSTEM
  elog.override\_error\_handler       | "Off"           | PHP\_INI\_SYSTEM
  elog.called\_origin\_error\_handler | "On"            | PHP\_INI\_SYSTEM
@@ -115,34 +115,25 @@ elog\_append\_filter().
 does not run when registered the same function name or same filter name in the
 elog\_filter\_append() or elog\_filter\_prepend().
 
-## elog.filter\_array\_assoc _boolean_
-
-Set whether to get associative array as a scalar value in
-elog\_filter\_to\_array().
-
-The keys of the array will be elog.filter\_label\_scalar.
-
-The default value is Off.
-
 ## elog.filter\_json\_unicode\_escape _boolean_
 
-Set whether the Unicode Escape processed by elog\_filter\_to\_json().
+Set whether the Unicode Escape processed by elog.to = json.
 
 The default value is On.
 
 ## elog.filter\_json\_assoc _boolean_
 
-Set whether to get associative array as a array in elog\_filter\_to\_json().
+Set whether to get associative array as a array in elog.to = json.
 
 The default value is Off.
 
 ## elog.filter\_http\_separator _string_
 
-Set the separator to be used in elog\_filter\_to\_http().
+Set the separator to be used in elog.to = http.
 
 ## elog.filter\_http\_encode _integer_
 
-Set the encode type to be used in elog\_filter\_to\_http().
+Set the encode type to be used in elog.to = http.
 
 The default value is PHP\_QUERY\_RFC1738.
 
@@ -153,10 +144,9 @@ The default value is PHP\_QUERY\_RFC1738.
 
 Set the timestamp format to be used in elog\_filter\_add\_timestamp().
 
-## elog.filter\_label\_scalar _string_
+## elog.filter\_label\_message _string_
 
-Set the field name of when processed the scalar value in
-elog\_filter\_to\_http_query() or elog\_filter\_to\_json().
+Set the field name of when processed the message value.
 
 The default value is "message".
 
@@ -249,11 +239,6 @@ filter function:
 
 builtin filter function:
 
-* elog\_filter\_to\_string — converted to a string
-* elog\_filter\_to\_json — converted to a json string
-* elog\_filter\_to\_http\_query — converted to a URL-encoded query string
-* elog\_filter\_to\_array — converted to a array
-* elog\_filter\_add\_eol — add a new line
 * elog\_filter\_add\_fileline — add the number of rows and executable file name
 * elog\_filter\_add\_timestamp — add the execution time
 * elog\_filter\_add\_request — add a variable REQUEST
@@ -525,104 +510,6 @@ Retrieve the list of registered filters on the running system.
 Returns an indexed array containing the name of filters available.
 
 
-## elog\_filter\_to\_string — converted to a string
-
-### Description
-
-string **elog\_filter\_to\_string** ( mixed _$value_ )
-
-Returns a string representation of value.
-
-### Parameters
-
-* _value_
-
-  The value being converted.
-
-### Return Values
-
-Returns a string on success or FALSE on failure.
-
-
-## elog\_filter\_to\_json — converted to a json string
-
-### Description
-
-string **elog\_filter\_to\_json** ( mixed _$value_ )
-
-Returns a string containing the JSON representation of value.
-
-### Parameters
-
-* _value_
-
-  The value being converted.
-
-### Return Values
-
-Returns a JSON encoded string on success or FALSE on failure.
-
-
-## elog\_filter\_to\_http\_query — converted to a URL-encoded query string
-
-### Description
-
-string **elog\_filter\_to\_http\_query** ( mixed _$value_ )
-
-Generates a URL-encoded query string from value.
-
-### Parameters
-
-* _value_
-
-  The value being converted.
-
-### Return Values
-
-Returns a URL-encoded string on success or FALSE on failure.
-
-
-## elog\_filter\_to\_array — converted to a array
-
-### Description
-
-array **elog\_filter\_to\_array** ( mixed _$value_ )
-
-Returns a array representation of value.
-
-### Parameters
-
-* _value_
-
-  The value being converted.
-
-### Return Values
-
-Returns a array on success or FALSE on failure.
-
-
-## elog\_filter\_add\_eol — add a new line
-
-### Description
-
-mixed **elog\_filter\_add\_eol** ( mixed _$value_ )
-
-Add a new line to the end.
-
-Does not do anything if the object or array.
-
-Add a new line after converted to a string in the case of non-string.
-
-### Parameters
-
-* _value_
-
-  The value.
-
-### Return Values
-
-Returns a value on success or FALSE on failure.
-
 ## elog\_filter\_add\_fileline — add the number of rows and executable file name
 
 ### Description
@@ -888,9 +775,9 @@ POST method, Media type is application/x-www-form-urlencoded.
     dummy-d-c-b-a
     */
 
-### filter: elog\_filter\_to\_string
+### ini: elog.to string (default)
 
-    elog_append_filter('elog_filter_to_string');
+    ini_set('elog.to', 'string');
     
     elog('dummy');
     /*
@@ -913,9 +800,9 @@ POST method, Media type is application/x-www-form-urlencoded.
     }
     */
 
-### filter: elog\_filter\_to\_json
+### ini: elog.to json
 
-    elog_append_filter('elog_filter_to_json');
+    ini_set('elog.to', 'json');
     
     elog('dummy');
     /*
@@ -926,18 +813,18 @@ POST method, Media type is application/x-www-form-urlencoded.
     elog(array('dummy'));
     /*
     // output:
-    ["dummy"]
+    {"MESSAGE":["dummy"]}
     */
 
     elog(array('a' => 'dummy', 'b' => 'DUMMY'));
     /*
     // output:
-    {"a":"dummy","b":"DUMMY"}
+    {MESSAGE":{"a":"dummy","b":"DUMMY"}}
     */
 
-### filter: elog\_filter\_to\_http\_query
+### ini: elog.to http
 
-    elog_append_filter('elog_filter_to_http_query');
+    ini_set('elog.to', 'http');
     
     elog('dummy');
     /*
@@ -948,64 +835,25 @@ POST method, Media type is application/x-www-form-urlencoded.
     elog(array('dummy'));
     /*
     // output:
-    0=dummy
+    message%5B0%5D=dummy
     */
 
     elog(array('a' => 'dummy', 'b' => 'DUMMY'));
     /*
     // output:
-    a=dummy&b=DUMMY
-    */
-
-### filter: elog\_filter\_to\_array
-
-    elog_append_filter(array('elog_filter_to_array','elog_filter_to_string'));
-
-    elog('dummy');
-    /*
-    // output:
-    [
-      "dummy"
-    ]
-    */
-
-    ini_set('elog.filter_array_assoc', 'On');
-
-    elog('dummy');
-    /*
-    // output:
-    {
-      "message": "dummy"
-    }
-    */
-
-    elog(array('dummy'));
-    /*
-    // output:
-    [
-      "dummy"
-    ]
-    */
-
-    elog(array('a' => 'dummy', 'b' => 'DUMMY'));
-    /*
-    // output:
-    {
-      "a": "dummy"
-      "b": "DUMMY"
-    }
+    message%5Ba%5D=dummy&message%5Bb%5D=DUMMY
     */
 
 ### filter: elog\_filter\_add\_fileline
 
-    elog_append_filter(array('elog_filter_add_fileline','elog_filter_to_string'));
+    elog_append_filter(array('elog_filter_add_fileline'));
     
     elog('dummy');
     /*
     // output:
     dummy
-    elog_file: /path/to/test.php
-    elog_line: 4
+    file: /path/to/test.php
+    line: 4
     */
 
     ini_set('elog.filter_label_file', 'file');
@@ -1013,11 +861,11 @@ POST method, Media type is application/x-www-form-urlencoded.
     elog(array('dummy'));
     /*
     // output:
-    {
-      0: "dummy"
-      "file": "/path/to/test.php"
-      "elog_line": 14
-    }
+    [
+      "dummy"
+    ]
+    file: /path/to/test.php
+    line: 14
     */
 
     ini_set('elog.filter_label_line', 'line');
@@ -1028,20 +876,20 @@ POST method, Media type is application/x-www-form-urlencoded.
     {
       "a": "dummy"
       "b": "DUMMY"
-      "file": "/path/to/test.php"
-      "line": 26
     }
+    file: /path/to/test.php
+    line: 26
     */
 
 ### filter: elog\_filter\_add\_timestamp
 
-    elog_append_filter(array('elog_filter_add_timestamp','elog_filter_to_string'));
+    elog_append_filter(array('elog_filter_add_timestamp'));
     
     elog('dummy');
     /*
     // output:
     dummy
-    elog_time: "20-May-2013 13:50:13 Asia/Tokyo"
+    time: "20-May-2013 13:50:13 Asia/Tokyo"
     */
 
     ini_set('elog.filter_timestamp_format', 'Y-m-d H:i:s');
@@ -1049,14 +897,14 @@ POST method, Media type is application/x-www-form-urlencoded.
     elog(array('dummy'));
     /*
     // output:
-    {
-      0: "dummy"
-      "elog_time": "2013-05-20 13:50:13"
-    }
+    [
+      "dummy"
+    ]
+    time: 2013-05-20 13:50:13
     */
 
     ini_set('elog.filter_timestamp_format', 'U');
-    ini_set('elog.filter_label_timestamp', 'time');
+    ini_set('elog.filter_label_timestamp', 'timestamp');
         
     elog(array('a' => 'dummy', 'b' => 'DUMMY'));
     /*
@@ -1064,13 +912,13 @@ POST method, Media type is application/x-www-form-urlencoded.
     {
       "a": "dummy"
       "b": "DUMMY"
-      "time": "1369025413"
     }
+    timestamp: 1369025413
     */
 
 ### filter: elog\_filter\_add\_request
 
-    elog_append_filter(array('elog_filter_add_request','elog_filter_to_string'));
+    elog_append_filter(array('elog_filter_add_request'));
 
     // REQUEST
     $_REQUEST['dummy'] = 'DUMMY';
@@ -1079,7 +927,7 @@ POST method, Media type is application/x-www-form-urlencoded.
     /*
     // output:
     dummy
-    elog_request: {
+    request: {
       "dummy": "DUMMY"
     }
     */
@@ -1087,11 +935,11 @@ POST method, Media type is application/x-www-form-urlencoded.
     elog(array('dummy'));
     /*
     // output:
-    {
-      0: "dummy"
-      "elog_request": {
-        "dummy": "DUMMY"
-      }
+    [
+      "dummy"
+    ]
+    request: {
+      "dummy": "DUMMY"
     }
     */
 
@@ -1101,33 +949,33 @@ POST method, Media type is application/x-www-form-urlencoded.
     {
       "a": "dummy"
       "b": "DUMMY"
-      "elog_request": {
-        "dummy": "DUMMY"
-      }
+    }
+    request: {
+      "dummy": "DUMMY"
     }
     */
 
 ### filter: elog\_filter\_add\_level
 
-    elog_append_filter(array('elog_filter_add_level','elog_filter_to_string'));
+    elog_append_filter(array('elog_filter_add_level'));
     
     elog_emerg('dummy');
     /*
     // output:
     dummy
-    elog_level: EMERGE
+    level: EMERGE
     */
 
     elog_warning(array('dummy'));
     /*
     // output:
-    {
-      0: "dummy"
-      "elog_level": "WARNING"
-    }
+    [
+      "dummy"
+    ]
+    level: WARNING
     */
 
-    ini_set('elog.filter_label_level', 'level');
+    ini_set('elog.filter_label_level', 'LEVEL');
     
     elog_err(array('a' => 'dummy', 'b' => 'DUMMY'));
     /*
@@ -1135,13 +983,11 @@ POST method, Media type is application/x-www-form-urlencoded.
     {
       "a": "dummy"
       "b": "DUMMY"
-      "level": "ERR"
     }
+    LEVEL: ERR
     */
 
 #### filter and HTTP
-
-    elog_append_filter('elog_filter_to_http_query');
 
     elog(array('a' => 'dummy', 'b' => 'DUMMY'), 11, 'http://127.0.0.1/recv.php');
     /*
@@ -1159,12 +1005,12 @@ POST method, Media type is application/x-www-form-urlencoded.
     /*
     // output: /path/to/file1
     dummy
-    elog_file: /path/to/test.php
-    elog_line: 2
+    file: /path/to/test.php
+    line: 2
 
     // output: /path/to/file2
     dummy
-    elog_time: 20-May-2013 14:02:14 Asia/Tokyo
+    time: 20-May-2013 14:02:14 Asia/Tokyo
     */
 
 ### override error\_log

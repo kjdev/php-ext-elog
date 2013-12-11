@@ -18,9 +18,6 @@ if (isset($_REQUEST)) {
 echo "[ append: elog_filter_add_request ]\n";
 var_dump(elog_append_filter('elog_filter_add_request'));
 
-echo "[ append: elog_filter_to_string ]\n";
-var_dump(elog_append_filter('elog_filter_to_string'));
-
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
     var_dump($val);
@@ -28,7 +25,6 @@ function test($val, $out) {
 
     echo "=== output ===\n";
     file_dump($out);
-    echo "\n";
 }
 
 test(true, $log);
@@ -62,38 +58,36 @@ fclose($file);
 --EXPECTF--
 [ append: elog_filter_add_request ]
 bool(true)
-[ append: elog_filter_to_string ]
-bool(true)
 [ boolean ]
 bool(true)
 === output ===
-1
-elog_request: NULL
+true
+request: NULL
 [ boolean ]
 bool(false)
 === output ===
-0
-elog_request: NULL
+false
+request: NULL
 [ integer ]
 int(12345)
 === output ===
 12345
-elog_request: NULL
+request: NULL
 [ double ]
 float(98.765)
 === output ===
 98.765
-elog_request: NULL
+request: NULL
 [ string ]
 string(5) "dummy"
 === output ===
 dummy
-elog_request: NULL
+request: NULL
 [ NULL ]
 NULL
 === output ===
-
-elog_request: NULL
+NULL
+request: NULL
 [ array ]
 array(3) {
   [0]=>
@@ -104,12 +98,12 @@ array(3) {
   string(1) "c"
 }
 === output ===
-{
-  0: "a"
-  1: "b"
-  2: "c"
-  "elog_request": NULL
-}
+[
+  "a"
+  "b"
+  "c"
+]
+request: NULL
 [ array ]
 array(3) {
   ["a"]=>
@@ -124,8 +118,8 @@ array(3) {
   "a": "A"
   "b": "B"
   "c": "C"
-  "elog_request": NULL
 }
+request: NULL
 [ array ]
 array(3) {
   [0]=>
@@ -140,8 +134,8 @@ array(3) {
   0: "a"
   "b": "B"
   1: "c"
-  "elog_request": NULL
 }
+request: NULL
 [ array ]
 array(2) {
   [0]=>
@@ -158,16 +152,16 @@ array(2) {
   }
 }
 === output ===
-{
-  0: "a"
-  1: [
+[
+  "a"
+  [
     "b"
     [
       "c"
     ]
   ]
-  "elog_request": NULL
-}
+]
+request: NULL
 [ object ]
 object(stdClass)#1 (3) {
   ["a"]=>
@@ -182,8 +176,8 @@ stdClass {
   "a": "A"
   "b": "B"
   "c": "C"
-  "elog_request": NULL
 }
+request: NULL
 [ object ]
 object(stdClass)#%d (3) {
   ["a"]=>
@@ -213,10 +207,10 @@ stdClass {
       "z": "Z"
     }
   }
-  "elog_request": NULL
 }
+request: NULL
 [ resource ]
-resource(30) of type (stream)
+resource(%d) of type (stream)
 === output ===
 resource of type(stream)
-elog_request: NULL
+request: NULL

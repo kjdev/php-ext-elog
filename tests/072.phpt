@@ -1,5 +1,5 @@
 --TEST--
-elog_filter_to_json: object
+elog to: json: object
 --INI--
 --SKIPIF--
 --FILE--
@@ -12,8 +12,7 @@ ini_set('elog.default_type', 3);
 ini_set('elog.default_destination', $log);
 
 
-echo "[ append: elog_filter_to_json ]\n";
-var_dump(elog_append_filter('elog_filter_to_json'));
+ini_set('elog.to', 'json');
 
 function test($val, $out) {
     echo "[ ", gettype($val), " ]\n";
@@ -46,8 +45,6 @@ test($obj, $log);
 fclose($file);
 ?>
 --EXPECTF--
-[ append: elog_filter_to_json ]
-bool(true)
 [ object ]
 object(stdClass)#%d (10) {
   ["t"]=>
@@ -86,9 +83,9 @@ object(stdClass)#%d (10) {
     string(1) "O"
   }
   ["r"]=>
-  resource(6) of type (stream)
+  resource(%d) of type (stream)
 }
 
-Warning: elog_filter_to_json(): Type is not supported in %s on line %d
+Warning: elog(): Type is not supported in %s on line %d
 === output ===
-{"t":true,"f":false,"i":12345,"l":98.765%d,"s":"dummy","n":null,"a":["a","b","c"],"m":{"a":"A","b":"B","c":"C"},"o":{"o":"O"},"r":null}
+{"message":{"t":true,"f":false,"i":12345,"l":98.765%d,"s":"dummy","n":null,"a":["a","b","c"],"m":{"a":"A","b":"B","c":"C"},"o":{"o":"O"},"r":null}}

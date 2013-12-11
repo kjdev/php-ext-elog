@@ -62,7 +62,6 @@ test($log_0, $log_1, $log_2, $log_3);
 [ Test 0 ]
 === output 0 ===
 [%s Asia/Tokyo] dummy
-
 === output 1 ===
 === output 2 ===
 === output 3 ===

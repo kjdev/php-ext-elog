@@ -14,9 +14,6 @@ ini_set('elog.default_destination', $log);
 echo "[ append: elog_filter_add_level ]\n";
 var_dump(elog_append_filter('elog_filter_add_level'));
 
-echo "[ append: elog_filter_add_eol ]\n";
-var_dump(elog_append_filter('elog_filter_add_eol'));
-
 function test($out) {
     elog("normal-dummy");
     echo "=== normal ===\n";
@@ -72,36 +69,34 @@ test($log);
 --EXPECTF--
 [ append: elog_filter_add_level ]
 bool(true)
-[ append: elog_filter_add_eol ]
-bool(true)
 
 [ Test 1 ]
 === normal ===
 normal-dummy
 === emerg ===
 emerg-dummy
-elog_level: EMERGE
+level: EMERGE
 === alert ===
 alert-dummy
-elog_level: ALERT
+level: ALERT
 === crit ===
 crit-dummy
-elog_level: CRIT
+level: CRIT
 === err ===
 err-dummy
-elog_level: ERR
+level: ERR
 === warning ===
 warning-dummy
-elog_level: WARNING
+level: WARNING
 === notice ===
 notice-dummy
-elog_level: NOTICE
+level: NOTICE
 === info ===
 info-dummy
-elog_level: INFO
+level: INFO
 === debug ===
 debug-dummy
-elog_level: DEBUG
+level: DEBUG
 
 [ Test 2 ]
 elog.level: alert
@@ -109,10 +104,10 @@ elog.level: alert
 normal-dummy
 === emerg ===
 emerg-dummy
-elog_level: EMERGE
+level: EMERGE
 === alert ===
 alert-dummy
-elog_level: ALERT
+level: ALERT
 === crit ===
 === err ===
 === warning ===
@@ -126,21 +121,21 @@ elog.level: notice
 normal-dummy
 === emerg ===
 emerg-dummy
-elog_level: EMERGE
+level: EMERGE
 === alert ===
 alert-dummy
-elog_level: ALERT
+level: ALERT
 === crit ===
 crit-dummy
-elog_level: CRIT
+level: CRIT
 === err ===
 err-dummy
-elog_level: ERR
+level: ERR
 === warning ===
 warning-dummy
-elog_level: WARNING
+level: WARNING
 === notice ===
 notice-dummy
-elog_level: NOTICE
+level: NOTICE
 === info ===
 === debug ===
